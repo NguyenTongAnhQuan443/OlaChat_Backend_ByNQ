@@ -71,7 +71,6 @@ public class FriendRequestService {
         return friendRequestMapper.toFriendRequestDTO(friendRequest);
     }
 
-
     //    Hủy lời mời kết bạn
     @Transactional
     public FriendRequestDTO cancelFriendRequest(User sender, User receiver) {
@@ -84,7 +83,7 @@ public class FriendRequestService {
             // Kiểm tra nếu trạng thái của lời mời là PENDING, có thể hủy
             if (friendRequestEntity.getStatus() == FriendRequestStatus.PENDING) {
                 friendRequestRepository.delete(friendRequestEntity); // Xóa lời mời
-                return friendRequestMapper.toFriendRequestDTO(friendRequestEntity); // Trả về DTO sau khi xóa
+                return friendRequestMapper.toFriendRequestDTO(friendRequestEntity);
             } else if (friendRequestEntity.getStatus() == FriendRequestStatus.ACCEPTED) {
                 // Nếu lời mời đã được chấp nhận, không thể hủy
                 throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,
@@ -111,7 +110,8 @@ public class FriendRequestService {
 
             return friendRequestMapper.toFriendRequestDTO(friendRequest.get());
         }
-        return null;
+        throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,
+                FriendRequestConstants.FRIEND_REQUEST_NOT_FOUND, null);
     }
 
     //    Từ chối lời mời kết bạn
@@ -123,6 +123,7 @@ public class FriendRequestService {
             friendRequestRepository.save(friendRequest.get());
             return friendRequestMapper.toFriendRequestDTO(friendRequest.get());
         }
-        return null;
+        throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,
+                FriendRequestConstants.FRIEND_REQUEST_CANNOT_DECLINE, null);
     }
 }
