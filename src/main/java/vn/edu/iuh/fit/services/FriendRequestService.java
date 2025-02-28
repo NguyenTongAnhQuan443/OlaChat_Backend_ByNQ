@@ -29,10 +29,28 @@ public class FriendRequestService {
             return null; // Không thể gửi lời mời cho chính mình
         }
 
+        // Kiểm tra nếu đã có lời mời kết bạn giữa sender và receiver
         Optional<FriendRequest> existingRequest = friendRequestRepository.findBySenderAndReceiver(sender, receiver);
+
+        // Nếu đã có lời mời tồn tại và trạng thái là PENDING thì không gửi lại
         if (existingRequest.isPresent()) {
-            return null; // Đã có lời mời kết bạn tồn tại
+            if (existingRequest.get().getStatus() == FriendRequestStatus.PENDING) {
+                return null; // Đã có lời mời kết bạn ở trạng thái chờ, không thể gửi lại
+            } else if (existingRequest.get().getStatus() == FriendRequestStatus.ACCEPTED) {
+                return null; // Đã là bạn bè, không thể gửi lại lời mời kết bạn
+            }
         }
+
+        // Kiểm tra trường hợp ngược lại: Nếu đã có lời mời kết bạn từ receiver tới sender và trạng thái là PENDING, không cho phép gửi lại
+        Optional<FriendRequest> reverseRequest = friendRequestRepository.findBySenderAndReceiver(receiver, sender);
+
+        // Nếu đã có lời mời từ phía người nhận cho người gửi và trạng thái là PENDING, không cho phép gửi lại
+        if (reverseRequest.isPresent() && reverseRequest.get().getStatus() == FriendRequestStatus.PENDING) {
+            return null; // Đã có lời mời từ phía người nhận đang chờ, không thể gửi lại
+        }
+
+
+        // Kiểm tra trường hợp ngược lại: Nếu đã có lời mời kết bạn, nhưng đã được ACCEPTED hoặc DECLINED, cho phép gửi lại
 
         FriendRequest friendRequest = FriendRequest.builder()
                 .sender(sender)

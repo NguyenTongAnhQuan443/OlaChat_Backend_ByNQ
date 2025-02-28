@@ -18,14 +18,18 @@ import java.util.UUID;
 @RequestMapping("/api/friend-requests")
 @RequiredArgsConstructor
 public class FriendRequestController {
+
+    private static final String SENDER_ID = "senderId";
+    private static final String RECEIVER_ID = "receiverId";
+
     private final FriendRequestService friendRequestService;
     private final UserService userService;
 
     //    Gửi lời mời kết bạn
     @PostMapping("/send")
     public ResponseEntity<ApiResponse<FriendRequestDTO>> sendFriendRequest(@RequestBody Map<String, UUID> requestBody) {
-        UUID senderId = requestBody.get("senderId");
-        UUID receiverId = requestBody.get("receiverId");
+        UUID senderId = requestBody.get(SENDER_ID);
+        UUID receiverId = requestBody.get(RECEIVER_ID);
 
         User sender = userService.getUserById(senderId);
         User receiver = userService.getUserById(receiverId);
@@ -34,14 +38,14 @@ public class FriendRequestController {
         if (result != null) {
             return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestMessages.FRIEND_REQUEST_SENT, result));
         } else {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Gửi lời mời kết bạn thất bại.", null));
+            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestMessages.FRIEND_REQUEST_FAILED, null));
         }
     }
 
     @DeleteMapping("/cancel")
     public ResponseEntity<ApiResponse<FriendRequestDTO>> cancelFriendRequest(@RequestBody Map<String, UUID> requestBody) {
-        UUID senderId = requestBody.get("senderId");
-        UUID receiverId = requestBody.get("receiverId");
+        UUID senderId = requestBody.get(SENDER_ID);
+        UUID receiverId = requestBody.get(RECEIVER_ID);
 
         User sender = userService.getUserById(senderId);
         User receiver = userService.getUserById(receiverId);
@@ -56,8 +60,8 @@ public class FriendRequestController {
 
     @PostMapping("/accept")
     public ResponseEntity<ApiResponse<FriendRequestDTO>> acceptFriendRequest(@RequestBody Map<String, UUID> requestBody) {
-        UUID senderId = requestBody.get("senderId");
-        UUID receiverId = requestBody.get("receiverId");
+        UUID senderId = requestBody.get(SENDER_ID);
+        UUID receiverId = requestBody.get(RECEIVER_ID);
 
         User receiver = userService.getUserById(receiverId);
         User sender = userService.getUserById(senderId);
@@ -73,8 +77,8 @@ public class FriendRequestController {
 
     @PostMapping("/decline")
     public ResponseEntity<ApiResponse<FriendRequestDTO>> declineFriendRequest(@RequestBody Map<String, UUID> requestBody) {
-        UUID senderId = requestBody.get("senderId");
-        UUID receiverId = requestBody.get("receiverId");
+        UUID senderId = requestBody.get(SENDER_ID);
+        UUID receiverId = requestBody.get(RECEIVER_ID);
 
         User receiver = userService.getUserById(receiverId);
         User sender = userService.getUserById(senderId);
