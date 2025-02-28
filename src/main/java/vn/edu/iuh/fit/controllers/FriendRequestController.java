@@ -9,7 +9,7 @@ import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.services.FriendRequestService;
 import vn.edu.iuh.fit.services.UserService;
 import vn.edu.iuh.fit.utils.ApiResponse;
-import vn.edu.iuh.fit.constants.FriendRequestMessages;
+import vn.edu.iuh.fit.constants.FriendRequestConstants;
 
 import java.util.Map;
 import java.util.UUID;
@@ -36,9 +36,9 @@ public class FriendRequestController {
         FriendRequestDTO result = friendRequestService.sendFriendRequest(sender, receiver);
 
         if (result != null) {
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestMessages.FRIEND_REQUEST_SENT, result));
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestConstants.FRIEND_REQUEST_SENT, result));
         } else {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestMessages.FRIEND_REQUEST_FAILED, null));
+            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestConstants.FRIEND_REQUEST_FAILED, null));
         }
     }
 
@@ -52,12 +52,13 @@ public class FriendRequestController {
         FriendRequestDTO result = friendRequestService.cancelFriendRequest(sender, receiver);
 
         if (result != null) {
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestMessages.FRIEND_REQUEST_CANCELLED, result));
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestConstants.FRIEND_REQUEST_CANCELLED, result));
         } else {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestMessages.FRIEND_REQUEST_CANNOT_CANCEL, null));
+            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestConstants.FRIEND_REQUEST_CANNOT_CANCEL, null));
         }
     }
 
+    //    Chấp nhận lời mời kết bạn
     @PostMapping("/accept")
     public ResponseEntity<ApiResponse<FriendRequestDTO>> acceptFriendRequest(@RequestBody Map<String, UUID> requestBody) {
         UUID senderId = requestBody.get(SENDER_ID);
@@ -68,9 +69,9 @@ public class FriendRequestController {
         FriendRequestDTO result = friendRequestService.acceptFriendRequest(receiver, sender);
 
         if (result != null) {
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestMessages.FRIEND_REQUEST_ACCEPTED, result));
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestConstants.FRIEND_REQUEST_ACCEPTED, result));
         } else {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestMessages.FRIEND_REQUEST_CANNOT_ACCEPT, null));
+            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestConstants.FRIEND_REQUEST_CANNOT_ACCEPT, null));
         }
 
     }
@@ -85,9 +86,9 @@ public class FriendRequestController {
         FriendRequestDTO result = friendRequestService.declineFriendRequest(receiver, sender);
 
         if (result != null) {
-            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestMessages.FRIEND_REQUEST_DECLINED, result));
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), FriendRequestConstants.FRIEND_REQUEST_DECLINED, result));
         } else {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestMessages.FRIEND_REQUEST_CANNOT_DECLINE, null));
+            return ResponseEntity.badRequest().body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), FriendRequestConstants.FRIEND_REQUEST_CANNOT_DECLINE, null));
         }
 
     }

@@ -5,8 +5,11 @@ import vn.edu.iuh.fit.models.Friendship;
 import vn.edu.iuh.fit.models.User;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface FriendshipRepository extends JpaRepository<Friendship, UUID> {
     List<Friendship> findByUser1OrUser2(User user1, User user2);
+
+    Optional<Friendship> findByUser1AndUser2(User user1, User user2);
 }
