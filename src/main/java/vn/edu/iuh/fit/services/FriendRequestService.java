@@ -68,6 +68,8 @@ public class FriendRequestService {
         FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).status(FriendRequestStatus.PENDING).build();
 
         friendRequestRepository.save(friendRequest);
+
+//        Gửi thông báo
         return friendRequestMapper.toFriendRequestDTO(friendRequest);
     }
 
@@ -108,6 +110,7 @@ public class FriendRequestService {
             Friendship friendship = Friendship.builder().user1(sender).user2(receiver).build();
             friendshipRepository.save(friendship);
 
+//            Gửi thông báo
             return friendRequestMapper.toFriendRequestDTO(friendRequest.get());
         }
         throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,

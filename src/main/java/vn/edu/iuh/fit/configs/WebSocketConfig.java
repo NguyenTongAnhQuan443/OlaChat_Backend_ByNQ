@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import vn.edu.iuh.fit.websockets.MessageHandler;
+import vn.edu.iuh.fit.websockets.ChatWebSocketHandler;
 
 @Configuration
 @EnableWebSocket
@@ -19,11 +19,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(getMessageHandler(), "/ws/chat").setAllowedOrigins("*");
+        registry.addHandler(getMessageHandler(), "/ws").setAllowedOrigins("*");
     }
 
     @Bean
-    public MessageHandler getMessageHandler() {
-        return new MessageHandler();
+    public ChatWebSocketHandler getMessageHandler() {
+        return new ChatWebSocketHandler();
     }
+
 }

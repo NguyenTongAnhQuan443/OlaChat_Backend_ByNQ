@@ -2,19 +2,18 @@ package vn.edu.iuh.fit.websockets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.mapper.Mapper;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import vn.edu.iuh.fit.enums.NQLog;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
-public class MessageHandler extends TextWebSocketHandler {
+public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -25,7 +24,7 @@ public class MessageHandler extends TextWebSocketHandler {
 
         UUID userId = getUserIdFromSession(session);
         if (userId != null) {
-            UserSessionManager.addUserSession(userId, session);
+            WebSocketSessionManager.addUserSession(userId, session);
             log.info("User Connected ID: " + userId);
         }
 
@@ -43,7 +42,7 @@ public class MessageHandler extends TextWebSocketHandler {
         String text = msgData.get("message");
 
         //  Tìm kiếm WebSocketSession của người nhận
-        WebSocketSession receiverSession = UserSessionManager.getUserSession(receiverId);
+        WebSocketSession receiverSession = WebSocketSessionManager.getUserSession(receiverId);
         if (receiverSession != null && receiverSession.isOpen()) {
             receiverSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(msgData)));
         } else {
@@ -57,7 +56,7 @@ public class MessageHandler extends TextWebSocketHandler {
 
         UUID userId = getUserIdFromSession(session);
         if (userId != null) {
-            UserSessionManager.removeUserSession(userId);
+            WebSocketSessionManager.removeUserSession(userId);
             log.info("User disconnected: " + userId);
         }
     }
