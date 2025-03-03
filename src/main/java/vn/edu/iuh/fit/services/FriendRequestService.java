@@ -13,6 +13,7 @@ import vn.edu.iuh.fit.models.Friendship;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.FriendRequestRepository;
 import vn.edu.iuh.fit.repositories.FriendshipRepository;
+import vn.edu.iuh.fit.websockets.NotificationWebSocketHandler;
 
 import java.util.Optional;
 
@@ -69,7 +70,13 @@ public class FriendRequestService {
 
         friendRequestRepository.save(friendRequest);
 
-//        Gửi thông báo
+        // Gửi thông báo tới receiver bằng WebSocket
+        String notificationMessage = "Bạn có một lời mời kết bạn từ " + sender.getUsername();
+        try {
+            NotificationWebSocketHandler.sendNotification(receiver.getId(), notificationMessage);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return friendRequestMapper.toFriendRequestDTO(friendRequest);
     }
 

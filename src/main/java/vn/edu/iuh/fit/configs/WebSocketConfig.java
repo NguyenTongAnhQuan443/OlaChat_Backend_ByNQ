@@ -6,25 +6,25 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import vn.edu.iuh.fit.websockets.ChatWebSocketHandler;
+import vn.edu.iuh.fit.websockets.NotificationWebSocketHandler;
 
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
-    /**
-     * http://localhost:8080/ws/chat
-     * Register WebSocketHandlers
-     *
-     * @param registry
-     */
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(getMessageHandler(), "/ws").setAllowedOrigins("*");
+        registry.addHandler(getChatHandler(), "/ws/chat").setAllowedOrigins("*");
+        registry.addHandler(getNotificationHandler(), "/ws/notification").setAllowedOrigins("*");
     }
 
     @Bean
-    public ChatWebSocketHandler getMessageHandler() {
+    public ChatWebSocketHandler getChatHandler() {
         return new ChatWebSocketHandler();
     }
 
+    @Bean
+    public NotificationWebSocketHandler getNotificationHandler() {
+        return new NotificationWebSocketHandler();
+    }
 }

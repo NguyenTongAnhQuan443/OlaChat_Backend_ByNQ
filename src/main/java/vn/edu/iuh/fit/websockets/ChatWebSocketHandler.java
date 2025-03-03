@@ -8,14 +8,24 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
+    private static final String SENDER_ID = "senderId";
+    private static final String RECEIVER_ID = "receiverId";
+    private static final String MESSAGE = "message";
+    private static final String USER_ID = "userId";
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+
+    private UUID getUserIdFromSession(WebSocketSession session) {
+        // Lấy userId từ headers
+        String userIdStr = session.getHandshakeHeaders().getFirst(USER_ID);
+        return userIdStr != null ? UUID.fromString(userIdStr) : null;
+    }
 
     //  Lắng nghe connection
     @Override
@@ -27,26 +37,24 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             WebSocketSessionManager.addUserSession(userId, session);
             log.info("User Connected ID: " + userId);
         }
-
     }
 
     //  Nhận message
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         super.handleMessage(session, message);
-        log.info("SERVER Received: " + message.getPayload());
 
+        log.info("Server Received: " + message.getPayload());
         Map<String, String> msgData = objectMapper.readValue((String) message.getPayload(), Map.class);
-        UUID senderId = UUID.fromString(msgData.get("senderId"));
-        UUID receiverId = UUID.fromString(msgData.get("receiverId"));
-        String text = msgData.get("message");
+
+        UUID receiverId = UUID.fromString(msgData.get(RECEIVER_ID));
 
         //  Tìm kiếm WebSocketSession của người nhận
         WebSocketSession receiverSession = WebSocketSessionManager.getUserSession(receiverId);
         if (receiverSession != null && receiverSession.isOpen()) {
             receiverSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(msgData)));
         } else {
-            log.warn("Receiver {} Is Not Online.", receiverId);
+            log.warn("Receiver Is Not Online ID: ", receiverId);
         }
     }
 
@@ -57,14 +65,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         UUID userId = getUserIdFromSession(session);
         if (userId != null) {
             WebSocketSessionManager.removeUserSession(userId);
-            log.info("User disconnected: " + userId);
+            log.info("User Disconnected: " + userId);
         }
-    }
-
-    //
-    private UUID getUserIdFromSession(WebSocketSession session) {
-        // Lấy userId từ headers
-        String userIdStr = session.getHandshakeHeaders().getFirst("userId");
-        return userIdStr != null ? UUID.fromString(userIdStr) : null;
     }
 }
