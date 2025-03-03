@@ -49,7 +49,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         UUID receiverId = UUID.fromString(msgData.get(RECEIVER_ID));
 
-        //  Tìm kiếm WebSocketSession của người nhận
         WebSocketSession receiverSession = WebSocketSessionManager.getUserSession(receiverId);
         if (receiverSession != null && receiverSession.isOpen()) {
             receiverSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(msgData)));
