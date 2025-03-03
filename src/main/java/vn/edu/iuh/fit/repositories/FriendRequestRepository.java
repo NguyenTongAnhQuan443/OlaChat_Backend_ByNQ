@@ -11,7 +11,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface FriendRequestRepository extends JpaRepository<FriendRequest, UUID> {
-    List<FriendRequest> findByReceiverAndStatus(User userReceiver, FriendRequestStatus friendRequestStatus);
-    List<FriendRequest> findBySenderAndStatus(User userSender, FriendRequestStatus friendRequestStatus);
     Optional<FriendRequest> findBySenderAndReceiver(User userSender, User userReceiver);
 }
