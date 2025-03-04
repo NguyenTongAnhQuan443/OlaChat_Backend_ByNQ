@@ -9,7 +9,9 @@ import vn.edu.iuh.fit.enums.UserStatus;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,5 +68,11 @@ public class UserSeeder implements CommandLineRunner {
         } else {
             System.out.println("✅ Users already exist. Skipping seeding.");
         }
+
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] key = new byte[32]; // Tạo khóa 256-bit
+        secureRandom.nextBytes(key);
+        String secretKey = Base64.getEncoder().encodeToString(key);
+        System.out.println("Generated Secret Key: " + secretKey);
     }
 }
