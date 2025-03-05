@@ -3,6 +3,7 @@ package vn.edu.iuh.fit.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.iuh.fit.constants.CodeConstants;
 import vn.edu.iuh.fit.constants.FriendRequestConstants;
 import vn.edu.iuh.fit.dtos.FriendRequestDTO;
 import vn.edu.iuh.fit.enums.FriendRequestStatus;
@@ -29,14 +30,14 @@ public class FriendRequestService {
     public FriendRequestDTO sendFriendRequest(User sender, User receiver) {
         if (sender.equals(receiver)) {
 //            Không thể gửi lời mời cho chính mình
-            throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_INVALID, null);
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_INVALID, null);
         }
 
 //        Kiểm tra nếu đã có quan hệ bạn bè giữa sender và receiver
         Optional<Friendship> existingFriendship1 = friendshipRepository.findByUser1AndUser2(sender, receiver);
         Optional<Friendship> existingFriendship2 = friendshipRepository.findByUser1AndUser2(receiver, sender);
         if (existingFriendship1.isPresent() || existingFriendship2.isPresent()) {
-            throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_ALREADY_FRIENDS, null);
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_ALREADY_FRIENDS, null);
         }
 
 //        Kiểm tra nếu đã có lời mời kết bạn giữa sender và receiver
@@ -47,12 +48,12 @@ public class FriendRequestService {
 
             if (friendRequest.getStatus() == FriendRequestStatus.PENDING) {
 //                Đã có lời mời kết bạn đang chờ, không thể gửi lại.
-                throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_PENDING, null);
+                throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_PENDING, null);
             }
 
             if (friendRequest.getStatus() == FriendRequestStatus.ACCEPTED) {
 //                Bạn đã là bạn bè, không thể gửi lại lời mời.
-                throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_ALREADY_FRIENDS, null);
+                throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_ALREADY_FRIENDS, null);
             }
         }
 
@@ -62,7 +63,7 @@ public class FriendRequestService {
             FriendRequest reverseFriendRequest = reverseRequest.get();
             if (reverseFriendRequest.getStatus() == FriendRequestStatus.PENDING) {
 //                Đã có lời mời kết bạn từ phía người nhận đang chờ.
-                throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_REVERSED_PENDING, null);
+                throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_REVERSED_PENDING, null);
             }
         }
 
@@ -95,13 +96,13 @@ public class FriendRequestService {
                 return friendRequestMapper.toFriendRequestDTO(friendRequestEntity);
             } else if (friendRequestEntity.getStatus() == FriendRequestStatus.ACCEPTED) {
                 // Nếu lời mời đã được chấp nhận, không thể hủy
-                throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,
+                throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
                         FriendRequestConstants.FRIEND_REQUEST_CANNOT_CANCEL, null);
             }
         }
 
         // Nếu không tìm thấy lời mời hoặc trạng thái không thể hủy, ném lỗi
-        throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,
+        throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
                 FriendRequestConstants.FRIEND_REQUEST_NOT_FOUND, null);
     }
 
@@ -120,7 +121,7 @@ public class FriendRequestService {
 //            Gửi thông báo
             return friendRequestMapper.toFriendRequestDTO(friendRequest.get());
         }
-        throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,
+        throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
                 FriendRequestConstants.FRIEND_REQUEST_NOT_FOUND, null);
     }
 
@@ -133,7 +134,7 @@ public class FriendRequestService {
             friendRequestRepository.save(friendRequest.get());
             return friendRequestMapper.toFriendRequestDTO(friendRequest.get());
         }
-        throw new CustomException(FriendRequestConstants.CODE_BAD_REQUEST,
+        throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
                 FriendRequestConstants.FRIEND_REQUEST_CANNOT_DECLINE, null);
     }
 }

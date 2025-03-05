@@ -34,3 +34,7 @@ build/
 
 ### SECRECT_KEY ###
 src/main/resources/.env
+
+### Public and Private Key ###
+*.pem
+
