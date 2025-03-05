@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -14,5 +15,9 @@ public class UserService {
 
     public User getUserById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+    }
+
+    public User getUserByPhonenumber(String phoneNumber) {
+        return userRepository.findUserByPhoneNumber(phoneNumber).orElseThrow(() -> new RuntimeException("User không tồn tại! "));
     }
 }

@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.seeders;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +36,7 @@ public class UserSeeder implements CommandLineRunner {
                     .dob(LocalDateTime.of(1995, 5, 20, 0, 0))
                     .status(UserStatus.ACTIVE)
                     .role(Role.USER)
+                    .phoneNumber("1234567890")
                     .build();
 
             User user2 = User.builder()
@@ -48,6 +50,7 @@ public class UserSeeder implements CommandLineRunner {
                     .dob(LocalDateTime.of(1998, 8, 15, 0, 0))
                     .status(UserStatus.ACTIVE)
                     .role(Role.USER)
+                    .phoneNumber("1234567891")
                     .build();
 
             User admin = User.builder()
@@ -61,6 +64,7 @@ public class UserSeeder implements CommandLineRunner {
                     .dob(LocalDateTime.of(1990, 1, 1, 0, 0))
                     .status(UserStatus.ACTIVE)
                     .role(Role.ADMIN)
+                    .phoneNumber("1234567892")
                     .build();
 
             userRepository.saveAll(List.of(user1, user2, admin));
@@ -69,10 +73,11 @@ public class UserSeeder implements CommandLineRunner {
             System.out.println("✅ Users already exist. Skipping seeding.");
         }
 
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] key = new byte[32]; // Tạo khóa 256-bit
-        secureRandom.nextBytes(key);
-        String secretKey = Base64.getEncoder().encodeToString(key);
-        System.out.println("Generated Secret Key: " + secretKey);
+//        SecureRandom secureRandom = new SecureRandom();
+//        byte[] key = new byte[32]; // Tạo khóa 256-bit
+//        secureRandom.nextBytes(key);
+//        String secretKey = Base64.getEncoder().encodeToString(key);
+//        System.out.println("Generated Secret Key: " + secretKey);
+
     }
 }

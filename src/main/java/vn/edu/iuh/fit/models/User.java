@@ -27,6 +27,8 @@ public class User extends BaseEntity {
     private String avatar;
     private String coverPhoto;
 
+    private String phoneNumber;
+
     @Column(columnDefinition = "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String bio;
 
