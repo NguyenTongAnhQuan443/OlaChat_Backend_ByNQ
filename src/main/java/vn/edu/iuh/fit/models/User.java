@@ -2,6 +2,7 @@ package vn.edu.iuh.fit.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.enums.Role;
 import vn.edu.iuh.fit.enums.UserStatus;
 
@@ -20,14 +21,20 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Column(columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String username;
     private String password;
+    @Column(columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String displayName;
     private String email;
     private String avatar;
     private String coverPhoto;
 
     private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider authProvider; // LOCAL, GOOGLE, FACEBOOK
 
     @Column(columnDefinition = "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String bio;
