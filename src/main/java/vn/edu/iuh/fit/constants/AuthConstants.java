@@ -20,4 +20,7 @@ public class AuthConstants {
 
     public static final String MESSAGE_ACCESS_TOKEN_REQUIRED = "Vui lòng cung cấp Access Token để đăng xuất";
     public static final String MESSAGE_INVALID_ACCESS_TOKEN = "Access Token không hợp lệ";
+
+    public static final String MESSAGE_TOKEN_HAS_BEEN_DISABLED = "Access Token đã bị vô hiệu hóa";
+    public static final String MESSAGE_TOKEN_IS_INVALID_OR_EXPIRED = "Token không hợp lệ hoặc đã hết hạn!";
 }

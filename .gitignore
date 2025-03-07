@@ -35,6 +35,9 @@ build/
 ### SECRECT_KEY ###
 src/main/resources/.env
 
-### Public and Private Key ###
+# Bỏ qua tất cả các file .pem trong mọi thư mục
 *.pem
+
+# Bỏ qua toàn bộ thư mục chứa certificate
+src/main/resources/certs/
 
