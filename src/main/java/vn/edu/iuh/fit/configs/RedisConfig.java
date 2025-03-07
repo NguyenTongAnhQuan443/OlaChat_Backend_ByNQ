@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 
-
 @Configuration
 public class RedisConfig {
 
@@ -19,20 +18,24 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int redisPort;
 
-    @Value("${spring.data.redis.password}")
+    @Value("${spring.data.redis.password:}") // Đặt mặc định là rỗng nếu không có password
     private String redisPassword;
 
-    @Value("${spring.data.redis.username:default}")
+    @Value("${spring.data.redis.username:}") // Đặt mặc định là rỗng nếu không có username
     private String redisUsername;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
-        config.setPassword(redisPassword);
 
-        LettucePoolingClientConfiguration clientConfig = LettucePoolingClientConfiguration.builder()
-                .build();
+        if (!redisUsername.isEmpty()) {
+            config.setUsername(redisUsername);
+        }
+        if (!redisPassword.isEmpty()) {
+            config.setPassword(redisPassword);
+        }
 
+        LettucePoolingClientConfiguration clientConfig = LettucePoolingClientConfiguration.builder().build();
         return new LettuceConnectionFactory(config, clientConfig);
     }
 
