@@ -29,6 +29,7 @@ public class User extends BaseEntity {
     private String email;
     private String avatar;
     private String coverPhoto;
+    private String externalId; // Lưu ID từ Google/Facebook
 
     private String phoneNumber;
 

@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import vn.edu.iuh.fit.constants.AuthConstants;
+import vn.edu.iuh.fit.models.User;
+import vn.edu.iuh.fit.repositories.UserRepository;
 import vn.edu.iuh.fit.services.CustomUserDetailsService;
 import vn.edu.iuh.fit.services.TokenBlacklistService;
 import vn.edu.iuh.fit.utils.JwtUtil;
@@ -25,6 +27,7 @@ import io.jsonwebtoken.Claims;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static vn.edu.iuh.fit.utils.sendErrorResponse.sendErrorResponse;
@@ -37,10 +40,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService customUserDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
     private final ObjectMapper objectMapper;
-
+    private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
 
@@ -50,46 +54,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String token = authorizationHeader.substring(7);
-        // Kiểm tra xem token có bị blacklist không
+        // Kiểm tra token có đúng định dạng JWT không (phải chứa 2 dấu ".")
+        if (!token.contains(".") || token.split("\\.").length != 3) {
+            sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, AuthConstants.MESSAGE_INVALID_JWT_FORMAT);
+            return;
+        }
         if (tokenBlacklistService.isTokenBlacklisted(token)) {
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_HAS_BEEN_DISABLED);
             return;
         }
 
-//        try {
-//            final String phoneNumber = jwtUtil.extractPhoneNumber(token);
-//            if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-//                UserDetails userDetails = customUserDetailsService.loadUserByUsername(phoneNumber);
-//                if (jwtUtil.validateToken(token, userDetails)) {
-//                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-//                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-//                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-//                }
-//            }
-//            filterChain.doFilter(request, response);
         try {
-            final String userEmail = jwtUtil.extractClaim(token, Claims::getSubject);
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
-                if (jwtUtil.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                }
+            UUID userId = jwtUtil.extractUserId(token);
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isEmpty()) {
+                sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, AuthConstants.MESSAGE_USER_ID_NOT_FOUND);
+                return;
+            }
+
+            UserDetails userDetails = customUserDetailsService.loadUserByUserId(userId);
+            if (jwtUtil.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
             filterChain.doFilter(request, response);
-        } catch (ExpiredJwtException e) {
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_IS_INVALID);
         } catch (MalformedJwtException e) {
-            sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, AuthConstants.MESSAGE_INVALID_ACCESS_TOKEN);
+            sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, AuthConstants.MESSAGE_MALFORMED_JWT);
+        } catch (ExpiredJwtException e) {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_EXPIRED);
         } catch (SignatureException e) {
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_INVALID_SIGNATURE);
-        } catch (UsernameNotFoundException e) {
-            sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, AuthConstants.MESSAGE_USER_NOT_FOUND);
         } catch (Exception e) {
-            sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JwtAuthenticationFilter Lỗi xử lý xác thực");
+            sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, AuthConstants.MESSAGE_JWT_AUTHENTICATION_ERROR);
         }
-
     }
 }

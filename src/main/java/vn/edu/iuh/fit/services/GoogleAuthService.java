@@ -21,7 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class GoogleAuthService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
     private static final Dotenv dotenv = Dotenv.load();
@@ -40,14 +40,13 @@ public class GoogleAuthService {
 
         GoogleIdToken.Payload payload = googleIdToken.getPayload();
         String email = payload.getEmail();
+        String googleId = payload.getSubject();
 
-        // Kiểm tra user đã tồn tại chưa
         Optional<User> userOpt = userRepository.findUserByEmail(email);
         User user;
         if (userOpt.isPresent()) {
             user = userOpt.get();
         } else {
-            // Nếu user chưa tồn tại, tạo mới
             user = User.builder()
                     .email(email)
                     .displayName((String) payload.get("name"))
@@ -61,7 +60,7 @@ public class GoogleAuthService {
         }
 
         // Tạo JWT token cho user
-        return jwtUtil.generateToken(user.getEmail());
+        return jwtUtil.generateToken(user.getId());
     }
 }
 

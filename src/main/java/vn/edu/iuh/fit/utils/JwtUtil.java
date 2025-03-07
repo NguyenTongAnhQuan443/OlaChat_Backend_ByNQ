@@ -1,17 +1,18 @@
 package vn.edu.iuh.fit.utils;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import vn.edu.iuh.fit.constants.AuthConstants;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -33,11 +34,23 @@ public class JwtUtil {
     private final UserRepository userRepository;
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(PUBLIC_KEY)  // Dùng public key để xác minh
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parser()
+                    .setSigningKey(PUBLIC_KEY)  // Dùng public key để xác minh
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (MalformedJwtException e) {
+            throw new MalformedJwtException(AuthConstants.MESSAGE_MALFORMED_JWT);
+        } catch (ExpiredJwtException e) {
+            throw e;
+        } catch (SignatureException e) {
+            System.out.println(AuthConstants.MESSAGE_INVALID_SIGNATURE + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            System.out.println("Unexpected JWT Error: " + e.getMessage());
+            throw new RuntimeException("JWT Token xử lý lỗi");
+        }
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -57,16 +70,47 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String phoneNumber = extractPhoneNumber(token);
-        return (phoneNumber.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        try {
+            UUID userId = extractUserId(token);
+            Optional<User> userOpt = userRepository.findById(userId);
+
+            if (userOpt.isEmpty()) {
+                System.out.println("User not found for ID: " + userId);
+                return false;
+            }
+
+            String usernameFromToken = userOpt.get().getEmail() != null ? userOpt.get().getEmail() : userOpt.get().getPhoneNumber();
+            String usernameFromUserDetails = userDetails.getUsername();
+
+            if (!usernameFromToken.equals(usernameFromUserDetails)) {
+                System.out.println("Username from token does not match UserDetails: " + usernameFromToken + " vs " + usernameFromUserDetails);
+                return false;
+            }
+
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            System.out.println("Token validation error: " + e.getMessage());
+            return false;
+        }
     }
 
-    public String generateToken(String phoneNumber) {
-        return Jwts.builder()
-                .setSubject(phoneNumber)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
-                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256)  // Dùng private key để ký
-                .compact();
+    public String generateToken(UUID userId) {
+        return Jwts.builder().setSubject(userId.toString()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
+                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256).compact();
     }
+
+    public UUID extractUserId(String token) {
+        try {
+            String userIdString = extractClaim(token, Claims::getSubject);
+            return UUID.fromString(userIdString);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid User ID in Token: " + e.getMessage());
+            throw new MalformedJwtException("User ID trong token không hợp lệ");
+        } catch (Exception e) {
+            System.out.println("Error extracting User ID: " + e.getMessage());
+            throw new RuntimeException("Không thể trích xuất User ID từ token");
+        }
+    }
+
+
 }
