@@ -34,7 +34,7 @@ public class JwtUtil {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(PUBLIC_KEY)
+                .setSigningKey(PUBLIC_KEY)  // Dùng public key để xác minh
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -57,16 +57,16 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        return extractClaim(token, Claims::getSubject).equals(((User) userDetails).getId().toString())
-                && !isTokenExpired(token);
+        final String phoneNumber = extractPhoneNumber(token);
+        return (phoneNumber.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    public String generateToken(User user) {
+    public String generateToken(String phoneNumber) {
         return Jwts.builder()
-                .setSubject(user.getId().toString())
+                .setSubject(phoneNumber)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
-                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256)
+                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256)  // Dùng private key để ký
                 .compact();
     }
 }

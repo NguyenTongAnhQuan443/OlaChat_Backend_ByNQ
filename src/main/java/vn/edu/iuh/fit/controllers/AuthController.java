@@ -1,3 +1,4 @@
+
 package vn.edu.iuh.fit.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,8 +54,9 @@ public class AuthController {
                     .body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, AuthConstants.MESSAGE_LOGIN_FAILED, null));
         }
 
+        String accessToken = jwtUtil.generateToken(phoneNumber);
+
         User user = userOpt.get();
-        String accessToken = jwtUtil.generateToken(user);
         UserDTO userDTO = userMapper.toUserDTO(user);
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of(
@@ -86,7 +88,7 @@ public class AuthController {
                     .body(new ApiResponse<>(CodeConstants.CODE_FORBIDDEN, AuthConstants.MESSAGE_REFRESH_TOKEN_EXPIRED, null));
         }
 
-        String newAccessToken = jwtUtil.generateToken(token.getUser());
+        String newAccessToken = jwtUtil.generateToken(token.getUser().getPhoneNumber());
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_REFRESH_TOKEN_SUCCESS, Map.of(
                 "accessToken", newAccessToken
@@ -129,4 +131,6 @@ public class AuthController {
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGOUT_SUCCESS, null));
     }
+
+
 }

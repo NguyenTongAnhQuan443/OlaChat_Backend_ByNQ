@@ -22,5 +22,8 @@ public class AuthConstants {
     public static final String MESSAGE_INVALID_ACCESS_TOKEN = "Access Token không hợp lệ";
 
     public static final String MESSAGE_TOKEN_HAS_BEEN_DISABLED = "Access Token đã bị vô hiệu hóa";
-    public static final String MESSAGE_TOKEN_IS_INVALID_OR_EXPIRED = "Token không hợp lệ hoặc đã hết hạn!";
+    public static final String MESSAGE_TOKEN_IS_INVALID = "Access Token đã hết hạn!";
+
+    // Thêm thông báo lỗi token
+    public static final String MESSAGE_INVALID_SIGNATURE = "Chữ ký token không hợp lệ";
 }

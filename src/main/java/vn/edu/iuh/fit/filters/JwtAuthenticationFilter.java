@@ -36,11 +36,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final ObjectMapper objectMapper;
+
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
 
@@ -50,34 +50,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String token = authorizationHeader.substring(7);
+        // Kiểm tra xem token có bị blacklist không
+        if (tokenBlacklistService.isTokenBlacklisted(token)) {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_HAS_BEEN_DISABLED);
+            return;
+        }
 
         try {
-            if (tokenBlacklistService.isTokenBlacklisted(token)) {
-                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_HAS_BEEN_DISABLED);
-                return;
-            }
-
-            final String userId = jwtUtil.extractClaim(token, Claims::getSubject);
-            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = customUserDetailsService.loadUserById(UUID.fromString(userId));
+            final String phoneNumber = jwtUtil.extractPhoneNumber(token);
+            if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername(phoneNumber);
                 if (jwtUtil.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
-        } catch (MalformedJwtException | SignatureException | ExpiredJwtException ex) {
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_IS_INVALID_OR_EXPIRED);
-            return;
-        } catch (UsernameNotFoundException ex) {
-            sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "User không tồn tại với số điện thoại");
-            return;
-        } catch (Exception ex) {
-            sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JwtAuthenticationFilter Lỗi hệ thống");
-            return;
+            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_IS_INVALID);
+        } catch (MalformedJwtException e) {
+            sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, AuthConstants.MESSAGE_INVALID_ACCESS_TOKEN);
+        } catch (SignatureException e) {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_INVALID_SIGNATURE);
+        } catch (UsernameNotFoundException e) {
+            sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, AuthConstants.MESSAGE_USER_NOT_FOUND);
+        } catch (Exception e) {
+            sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JwtAuthenticationFilter Lỗi xử lý xác thực");
         }
 
-        filterChain.doFilter(request, response);
     }
 }
