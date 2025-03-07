@@ -3,6 +3,7 @@ package vn.edu.iuh.fit.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import vn.edu.iuh.fit.mappers.UserMapper;
 import vn.edu.iuh.fit.models.RefreshToken;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
+import vn.edu.iuh.fit.services.GoogleAuthService;
 import vn.edu.iuh.fit.services.RefreshTokenService;
 import vn.edu.iuh.fit.services.TokenBlacklistService;
 import vn.edu.iuh.fit.services.UserService;
@@ -33,6 +35,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -41,6 +44,26 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
     private final TokenBlacklistService tokenBlacklistService;
+    private final GoogleAuthService googleAuthService;
+
+    @PostMapping("/login-google")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithGoogle(@RequestBody Map<String, String> request) {
+        String idToken = request.get("idToken");
+//        System.out.println("QUAN NE idToken: " + idToken);
+        try {
+            String accessToken = googleAuthService.verifyGoogleToken(idToken);
+            System.out.println("QUAN NE accessToken: " + accessToken);
+            return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of(
+                    "accessToken", accessToken
+
+            )));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "Google token không hợp lệ", null));
+        }
+    }
+
 
     @PostMapping("/login-phone")
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithPhoneNumber(@RequestBody Map<String, String> request) {

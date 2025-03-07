@@ -30,140 +30,199 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
+        <!-- ===================== SPRING BOOT CORE ===================== -->
+        <!-- Starter cho ứng dụng web (Spring MVC) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- WebSocket support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
+        <!-- Spring Data JPA (ORM) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
+        <!-- Spring Validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ===================== DATABASE ===================== -->
+        <!-- MariaDB JDBC Driver -->
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.mapstruct/mapstruct -->
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>1.6.3</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.mapstruct/mapstruct-processor -->
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct-processor</artifactId>
-            <version>1.6.3</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-crypto -->
+
+        <!-- ===================== SECURITY ===================== -->
+        <!-- Spring Security Crypto -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
             <version>6.4.3</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework/spring-messaging -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-messaging</artifactId>
-            <version>7.0.0-M2</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.5</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/io.github.cdimascio/dotenv-java -->
-        <dependency>
-            <groupId>io.github.cdimascio</groupId>
-            <artifactId>dotenv-java</artifactId>
-            <version>3.2.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-core -->
+
+        <!-- Spring Security Core -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
             <version>6.4.3</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-web -->
+
+        <!-- Spring Security Web -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
             <version>6.4.3</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-config -->
+
+        <!-- Spring Security Config -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-config</artifactId>
             <version>6.4.3</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
+
+        <!-- Spring Security OAuth2 Client -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-client</artifactId>
+            <version>6.4.3</version>
+        </dependency>
+
+        <!-- ===================== JWT AUTHENTICATION ===================== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.12.6</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-redis -->
+
+        <!-- ===================== CACHING & REDIS ===================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-redis</artifactId>
             <version>4.0.0-M1</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-pool2 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
             <version>2.12.1</version>
         </dependency>
+
+        <!-- ===================== DEVELOPMENT TOOLS ===================== -->
+        <!-- DevTools để hỗ trợ phát triển nhanh -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Lombok để giảm code boilerplate -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ===================== TESTING ===================== -->
+        <!-- Spring Boot Starter Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ===================== API DOCUMENTATION ===================== -->
+        <!-- SpringDoc OpenAPI (Swagger UI) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.5</version>
+        </dependency>
+
+        <!-- ===================== UTILITIES ===================== -->
+        <!-- MapStruct để hỗ trợ mapping DTO -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.6.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.6.3</version>
+        </dependency>
+
+        <!-- Dotenv hỗ trợ quản lý biến môi trường -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+
+        <!-- ===================== MESSAGING ===================== -->
+        <!-- Spring Messaging (cho WebSocket và RabbitMQ nếu cần) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-messaging</artifactId>
+            <version>7.0.0-M2</version>
+        </dependency>
+
+        <!-- ===================== MAIL SERVICE ===================== -->
+        <!-- Spring Boot Starter Mail -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- ===================== GOOGLE SERVICES ===================== -->
+        <!-- Google API Client -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.7.2</version>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/com.google.api-client/google-api-client-jackson2 -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client-jackson2</artifactId>
+            <version>2.7.2</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.http-client/google-http-client-jackson2 -->
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client-jackson2</artifactId>
+            <version>1.46.3</version>
+        </dependency>
+
 
 
     </dependencies>

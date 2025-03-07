@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.enums.Role;
 import vn.edu.iuh.fit.enums.UserStatus;
 import vn.edu.iuh.fit.models.User;
@@ -37,6 +38,7 @@ public class UserSeeder implements CommandLineRunner {
                     .status(UserStatus.ACTIVE)
                     .role(Role.USER)
                     .phoneNumber("1234567890")
+                    .authProvider(AuthProvider.LOCAL)
                     .build();
 
             User user2 = User.builder()
@@ -51,6 +53,7 @@ public class UserSeeder implements CommandLineRunner {
                     .status(UserStatus.ACTIVE)
                     .role(Role.USER)
                     .phoneNumber("1234567891")
+                    .authProvider(AuthProvider.LOCAL)
                     .build();
 
             User admin = User.builder()
@@ -65,6 +68,7 @@ public class UserSeeder implements CommandLineRunner {
                     .status(UserStatus.ACTIVE)
                     .role(Role.ADMIN)
                     .phoneNumber("1234567892")
+                    .authProvider(AuthProvider.LOCAL)
                     .build();
 
             userRepository.saveAll(List.of(user1, user2, admin));
