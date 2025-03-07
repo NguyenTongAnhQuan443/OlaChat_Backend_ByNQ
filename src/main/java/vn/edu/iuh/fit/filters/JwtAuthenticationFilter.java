@@ -20,10 +20,12 @@ import vn.edu.iuh.fit.constants.AuthConstants;
 import vn.edu.iuh.fit.services.CustomUserDetailsService;
 import vn.edu.iuh.fit.services.TokenBlacklistService;
 import vn.edu.iuh.fit.utils.JwtUtil;
+import io.jsonwebtoken.Claims;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static vn.edu.iuh.fit.utils.sendErrorResponse.sendErrorResponse;
 
@@ -34,7 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
-    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -56,9 +57,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            final String phoneNumber = jwtUtil.extractPhoneNumber(token);
-            if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = customUserDetailsService.loadUserByUsername(phoneNumber);
+            final String userId = jwtUtil.extractClaim(token, Claims::getSubject);
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = customUserDetailsService.loadUserById(UUID.fromString(userId));
                 if (jwtUtil.validateToken(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
