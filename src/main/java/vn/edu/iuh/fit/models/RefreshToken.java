@@ -28,4 +28,7 @@ public class RefreshToken {
 
     @Column(nullable = false)
     private Date expiryDate;
+
+//    @Column(nullable = false) // ID thiết bị hoặc User-Agent để phân biệt
+    private String deviceId;
 }

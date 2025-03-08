@@ -1,4 +1,5 @@
 package vn.edu.iuh.fit.controllers;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,47 +40,42 @@ public class AuthController {
     private final UserMapper userMapper;
     private final TokenBlacklistService tokenBlacklistService;
     private final GoogleAuthService googleAuthService;
-    private final FacebookAuthService facebookAuthService;
-
-    @PostMapping("/login-facebook")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithFacebook(@RequestBody Map<String, String> request) {
-        String accessToken = request.get("accessToken");
-        try {
-            String token = facebookAuthService.verifyFacebookToken(accessToken);
-            return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of(
-                    "accessToken", token
-            )));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "Facebook token không hợp lệ", null));
-        }
-    }
-
 
     @PostMapping("/login-google")
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithGoogle(@RequestBody Map<String, String> request) {
         String idToken = request.get("idToken");
+        String deviceId = request.get("deviceId");
+
         try {
             String accessToken = googleAuthService.verifyGoogleToken(idToken);
-
-            // In ra accessToken để kiểm tra
             System.out.println("Generated Access Token: " + accessToken);
+
+            User user = googleAuthService.getUserFromToken(idToken);
+            // Kiểm tra xem user đã có refresh token trên thiết bị này chưa
+            Optional<RefreshToken> existingRefreshToken = refreshTokenService.findByUserAndDevice(user, deviceId);
+            String refreshToken;
+
+            if (existingRefreshToken.isPresent()) {
+                refreshToken = existingRefreshToken.get().getToken();
+            } else {
+                RefreshToken newToken = refreshTokenService.createRefreshToken(user, deviceId);
+                refreshToken = newToken.getToken();
+            }
 
             return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of(
                     "accessToken", accessToken
             )));
         } catch (Exception e) {
-            System.err.println("Google token không hợp lệ: " + e.getMessage()); // In lỗi nếu có
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "Google token không hợp lệ", null));
         }
     }
 
-
     @PostMapping("/login-phone")
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithPhoneNumber(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
         String password = request.get("password");
+        String deviceId = request.get("deviceId");
 
         // Kiểm tra thông tin đăng nhập
         Optional<User> userOpt = userRepository.findUserByPhoneNumber(phoneNumber);
@@ -92,6 +88,16 @@ public class AuthController {
         String accessToken = jwtUtil.generateToken(user.getId());
         UserDTO userDTO = userMapper.toUserDTO(user);
 
+        // Kiểm tra xem user đã có refresh token trên thiết bị này chưa
+        Optional<RefreshToken> existingRefreshToken = refreshTokenService.findByUserAndDevice(user, deviceId);
+        String refreshToken;
+
+        if (existingRefreshToken.isPresent()) {
+            refreshToken = existingRefreshToken.get().getToken();
+        } else {
+            RefreshToken newToken = refreshTokenService.createRefreshToken(user, deviceId);
+            refreshToken = newToken.getToken();
+        }
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of(
                 "accessToken", accessToken,
                 "user", userDTO
@@ -132,6 +138,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout(@RequestBody Map<String, String> request) {
         String accessToken = request.get("accessToken");
+        String deviceId = request.get("deviceId");
 
         if (accessToken == null || accessToken.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -155,14 +162,13 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(CodeConstants.CODE_NOT_FOUND, AuthConstants.MESSAGE_USER_NOT_FOUND, null));
         }
-        // Xóa refresh token
-        refreshTokenService.deleteByUser(userOpt.get());
 
+        User user = userOpt.get();
+        // Xóa refresh token
+        refreshTokenService.deleteByUserAndDevice(user, deviceId);
         // Thêm Access Token vào Blacklist
         tokenBlacklistService.addToBlacklist(accessToken);
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGOUT_SUCCESS, null));
     }
-
-
 }

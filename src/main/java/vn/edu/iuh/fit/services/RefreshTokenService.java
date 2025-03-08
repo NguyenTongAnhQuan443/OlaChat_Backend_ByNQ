@@ -19,18 +19,30 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
 
-    public RefreshToken createRefreshToken(User user) {
+    public RefreshToken createRefreshToken(User user, String deviceId) {
+
+        refreshTokenRepository.deleteByUserAndDeviceId(user, deviceId);
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .token(UUID.randomUUID().toString())
                 .expiryDate(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7)) // 7 ngày
+                .deviceId(deviceId)
                 .build();
 
         return refreshTokenRepository.save(refreshToken);
     }
 
+    public Optional<RefreshToken> findByUserAndDevice(User user, String deviceId) {
+        return refreshTokenRepository.findByUserAndDeviceId(user, deviceId);
+    }
+
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
+    }
+
+    @Transactional
+    public void deleteByUserAndDevice(User user, String deviceId) {
+        refreshTokenRepository.deleteByUserAndDeviceId(user, deviceId);
     }
 
     @Transactional
