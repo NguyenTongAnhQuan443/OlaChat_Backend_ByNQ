@@ -48,8 +48,7 @@ public class JwtUtil {
             System.out.println(AuthConstants.MESSAGE_INVALID_SIGNATURE + e.getMessage());
             throw e;
         } catch (Exception e) {
-            System.out.println("Unexpected JWT Error: " + e.getMessage());
-            throw new RuntimeException("JWT Token xử lý lỗi");
+            throw new RuntimeException("JWT Token xử lý lỗi: " + e);
         }
     }
 
@@ -104,13 +103,9 @@ public class JwtUtil {
             String userIdString = extractClaim(token, Claims::getSubject);
             return UUID.fromString(userIdString);
         } catch (IllegalArgumentException e) {
-            System.out.println("Invalid User ID in Token: " + e.getMessage());
-            throw new MalformedJwtException("User ID trong token không hợp lệ");
+            throw new MalformedJwtException("User ID trong token không hợp lệ" + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error extracting User ID: " + e.getMessage());
-            throw new RuntimeException("Không thể trích xuất User ID từ token");
+            throw new RuntimeException("Không thể trích xuất User ID từ token" + e.getMessage());
         }
     }
-
-
 }
