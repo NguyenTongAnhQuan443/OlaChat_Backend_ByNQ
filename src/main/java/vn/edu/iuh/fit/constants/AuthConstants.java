@@ -10,6 +10,7 @@ public class AuthConstants {
     public static final String MESSAGE_REFRESH_TOKEN_SUCCESS = "Cấp lại Access Token thành công";
     public static final String MESSAGE_REFRESH_TOKEN_EXPIRED = "Refresh Token đã hết hạn";
     public static final String MESSAGE_REFRESH_TOKEN_REQUIRED = "Refresh Token không được để trống";
+    public static final String MESSAGE_REFRESH_TOKEN_INVALID = "Refresh token không hợp lệ hoặc đã hết hạn!";
 
     // Thông báo đăng xuất
     public static final String MESSAGE_LOGOUT_SUCCESS = "Đăng xuất thành công";
@@ -18,9 +19,7 @@ public class AuthConstants {
     // Thông báo người dùng
     public static final String MESSAGE_USER_NOT_FOUND = "Người dùng không tồn tại";
     public static final String MESSAGE_USER_ID_NOT_FOUND = "Không tìm thấy người dùng với ID đã cung cấp";
-
     public static final String MESSAGE_INVALID_ACCESS_TOKEN = "Access Token không hợp lệ";
-
     public static final String MESSAGE_TOKEN_HAS_BEEN_DISABLED = "Access Token đã bị vô hiệu hóa";
     public static final String MESSAGE_TOKEN_EXPIRED = "Access Token đã hết hạn!";
 

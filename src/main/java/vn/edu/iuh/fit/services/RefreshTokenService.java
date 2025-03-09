@@ -40,6 +40,10 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByToken(token);
     }
 
+    public Optional<RefreshToken> findByTokenAndDevice(String token, String deviceId) {
+        return refreshTokenRepository.findByTokenAndDeviceId(token, deviceId);
+    }
+
     @Transactional
     public void deleteByUserAndDevice(User user, String deviceId) {
         refreshTokenRepository.deleteByUserAndDeviceId(user, deviceId);

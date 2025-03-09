@@ -35,9 +35,8 @@ public class AuthController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshAccessToken(@RequestBody Map<String, String> request) {
-        return authService.refreshAccessToken(request.get("refreshToken"));
+        return authService.refreshAccessToken(request.get("refreshToken"), request.get("deviceId"));
     }
-
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout(@RequestBody Map<String, String> request) {
