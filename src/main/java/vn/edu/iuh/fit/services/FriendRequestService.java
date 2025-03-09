@@ -14,127 +14,82 @@ import vn.edu.iuh.fit.models.Friendship;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.FriendRequestRepository;
 import vn.edu.iuh.fit.repositories.FriendshipRepository;
-import vn.edu.iuh.fit.websockets.NotificationWebSocketHandler;
+import vn.edu.iuh.fit.services.interfaces.IFriendRequestService;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class FriendRequestService {
+public class FriendRequestService implements IFriendRequestService {
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipRepository friendshipRepository;
     private final FriendRequestMapper friendRequestMapper;
 
-    //    Gửi lời mời kết bạn
     @Transactional
+    @Override
     public FriendRequestDTO sendFriendRequest(User sender, User receiver) {
-        if (sender.equals(receiver)) {
-//            Không thể gửi lời mời cho chính mình
-            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_INVALID, null);
-        }
-
-//        Kiểm tra nếu đã có quan hệ bạn bè giữa sender và receiver
-        Optional<Friendship> existingFriendship1 = friendshipRepository.findByUser1AndUser2(sender, receiver);
-        Optional<Friendship> existingFriendship2 = friendshipRepository.findByUser1AndUser2(receiver, sender);
-        if (existingFriendship1.isPresent() || existingFriendship2.isPresent()) {
-            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_ALREADY_FRIENDS, null);
-        }
-
-//        Kiểm tra nếu đã có lời mời kết bạn giữa sender và receiver
-        Optional<FriendRequest> existingRequest = friendRequestRepository.findBySenderAndReceiver(sender, receiver);
-        if (existingRequest.isPresent()) {
-
-            FriendRequest friendRequest = existingRequest.get();
-
-            if (friendRequest.getStatus() == FriendRequestStatus.PENDING) {
-//                Đã có lời mời kết bạn đang chờ, không thể gửi lại.
-                throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_PENDING, null);
-            }
-
-            if (friendRequest.getStatus() == FriendRequestStatus.ACCEPTED) {
-//                Bạn đã là bạn bè, không thể gửi lại lời mời.
-                throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_ALREADY_FRIENDS, null);
-            }
-        }
-
-//         Kiểm tra trường hợp ngược lại: nếu đã có lời mời kết bạn từ receiver tới sender
-        Optional<FriendRequest> reverseRequest = friendRequestRepository.findBySenderAndReceiver(receiver, sender);
-        if (reverseRequest.isPresent()) {
-            FriendRequest reverseFriendRequest = reverseRequest.get();
-            if (reverseFriendRequest.getStatus() == FriendRequestStatus.PENDING) {
-//                Đã có lời mời kết bạn từ phía người nhận đang chờ.
-                throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_REVERSED_PENDING, null);
-            }
-        }
-
-        FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).status(FriendRequestStatus.PENDING).build();
-
+        validateFriendRequest(sender, receiver);
+        FriendRequest friendRequest = FriendRequest.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .status(FriendRequestStatus.PENDING)
+                .build();
         friendRequestRepository.save(friendRequest);
-
-        // Gửi thông báo tới receiver bằng WebSocket
-        String notificationMessage = "Bạn có một lời mời kết bạn từ " + sender.getUsername();
-        try {
-            NotificationWebSocketHandler.sendNotification(receiver.getId(), notificationMessage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return friendRequestMapper.toFriendRequestDTO(friendRequest);
     }
 
-    //    Hủy lời mời kết bạn
     @Transactional
+    @Override
     public FriendRequestDTO cancelFriendRequest(User sender, User receiver) {
-        // Tìm lời mời kết bạn giữa sender và receiver
-        Optional<FriendRequest> friendRequest = friendRequestRepository.findBySenderAndReceiver(sender, receiver);
-
-        if (friendRequest.isPresent()) {
-            FriendRequest friendRequestEntity = friendRequest.get();
-
-            // Kiểm tra nếu trạng thái của lời mời là PENDING, có thể hủy
-            if (friendRequestEntity.getStatus() == FriendRequestStatus.PENDING) {
-                friendRequestRepository.delete(friendRequestEntity); // Xóa lời mời
-                return friendRequestMapper.toFriendRequestDTO(friendRequestEntity);
-            } else if (friendRequestEntity.getStatus() == FriendRequestStatus.ACCEPTED) {
-                // Nếu lời mời đã được chấp nhận, không thể hủy
-                throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
-                        FriendRequestConstants.FRIEND_REQUEST_CANNOT_CANCEL, null);
-            }
-        }
-
-        // Nếu không tìm thấy lời mời hoặc trạng thái không thể hủy, ném lỗi
-        throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
-                FriendRequestConstants.FRIEND_REQUEST_NOT_FOUND, null);
+        FriendRequest friendRequest = findPendingRequest(sender, receiver);
+        friendRequestRepository.delete(friendRequest);
+        return friendRequestMapper.toFriendRequestDTO(friendRequest);
     }
 
-    //    Chấp nhận lời mời kết bạn
     @Transactional
-    public FriendRequestDTO acceptFriendRequest(User receiver, User sender) {
-        Optional<FriendRequest> friendRequest = friendRequestRepository.findBySenderAndReceiver(sender, receiver);
-        if (friendRequest.isPresent() && friendRequest.get().getStatus() == FriendRequestStatus.PENDING) {
-            friendRequest.get().setStatus(FriendRequestStatus.ACCEPTED);
-            friendRequestRepository.save(friendRequest.get());
+    @Override
+    public FriendRequestDTO acceptFriendRequest(User sender, User receiver) {
+        FriendRequest friendRequest = findPendingRequest(sender, receiver);
+        friendRequest.setStatus(FriendRequestStatus.ACCEPTED);
+        friendRequestRepository.save(friendRequest);
 
-            // Tạo quan hệ bạn bè
-            Friendship friendship = Friendship.builder().user1(sender).user2(receiver).build();
-            friendshipRepository.save(friendship);
-
-//            Gửi thông báo
-            return friendRequestMapper.toFriendRequestDTO(friendRequest.get());
-        }
-        throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
-                FriendRequestConstants.FRIEND_REQUEST_NOT_FOUND, null);
+        Friendship friendship = Friendship.builder()
+                .user1(sender)
+                .user2(receiver)
+                .build();
+        friendshipRepository.save(friendship);
+        return friendRequestMapper.toFriendRequestDTO(friendRequest);
     }
 
-    //    Từ chối lời mời kết bạn
     @Transactional
-    public FriendRequestDTO declineFriendRequest(User receiver, User sender) {
-        Optional<FriendRequest> friendRequest = friendRequestRepository.findBySenderAndReceiver(sender, receiver);
-        if (friendRequest.isPresent() && friendRequest.get().getStatus() == FriendRequestStatus.PENDING) {
-            friendRequest.get().setStatus(FriendRequestStatus.DECLINED);
-            friendRequestRepository.save(friendRequest.get());
-            return friendRequestMapper.toFriendRequestDTO(friendRequest.get());
+    @Override
+    public FriendRequestDTO declineFriendRequest(User sender, User receiver) {
+        FriendRequest friendRequest = findPendingRequest(sender, receiver);
+        friendRequest.setStatus(FriendRequestStatus.DECLINED);
+        friendRequestRepository.save(friendRequest);
+        return friendRequestMapper.toFriendRequestDTO(friendRequest);
+    }
+
+    private void validateFriendRequest(User sender, User receiver) {
+        if (sender.equals(receiver)) {
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_INVALID, null);
         }
-        throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
-                FriendRequestConstants.FRIEND_REQUEST_CANNOT_DECLINE, null);
+
+        Optional<Friendship> existingFriendship = friendshipRepository.findByUser1AndUser2(sender, receiver);
+        if (existingFriendship.isPresent()) {
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_ALREADY_FRIENDS, null);
+        }
+
+        Optional<FriendRequest> existingRequest = friendRequestRepository.findBySenderAndReceiver(sender, receiver);
+        if (existingRequest.isPresent() && existingRequest.get().getStatus() == FriendRequestStatus.PENDING) {
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_PENDING, null);
+        }
+    }
+
+    private FriendRequest findPendingRequest(User sender, User receiver) {
+        return friendRequestRepository.findBySenderAndReceiver(sender, receiver)
+                .filter(friendRequest -> friendRequest.getStatus() == FriendRequestStatus.PENDING)
+                .orElseThrow(() -> new CustomException(CodeConstants.CODE_BAD_REQUEST, FriendRequestConstants.FRIEND_REQUEST_NOT_FOUND, null));
     }
 }
+

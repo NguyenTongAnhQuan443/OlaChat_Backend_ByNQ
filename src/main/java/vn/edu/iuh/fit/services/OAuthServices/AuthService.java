@@ -1,8 +1,7 @@
-package vn.edu.iuh.fit.services;
+package vn.edu.iuh.fit.services.OAuthServices;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,8 +12,10 @@ import vn.edu.iuh.fit.mappers.UserMapper;
 import vn.edu.iuh.fit.models.RefreshToken;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
-import vn.edu.iuh.fit.services.interfaces.IOAuthVerifier;
-import vn.edu.iuh.fit.services.interfaces.IUserProvider;
+import vn.edu.iuh.fit.services.RefreshTokenService;
+import vn.edu.iuh.fit.services.TokenBlacklistService;
+import vn.edu.iuh.fit.services.interfaces.IOAuth.IOAuthVerifier;
+import vn.edu.iuh.fit.services.interfaces.IOAuth.IUserProvider;
 import vn.edu.iuh.fit.utils.ApiResponse;
 import vn.edu.iuh.fit.utils.JwtUtil;
 
@@ -105,7 +106,12 @@ public class AuthService {
         }
 
         User user = userOpt.get();
-        refreshTokenService.deleteByUser(user);
+        Optional<RefreshToken> tokenOptional = refreshTokenService.findByUserAndDevice(user, deviceId);
+        if (tokenOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(CodeConstants.CODE_NOT_FOUND, AuthConstants.MESSAGE_DEVICE_LOGOUT_NOT_FOUND, null));
+        }
+        refreshTokenService.deleteByUserAndDevice(user, deviceId);
         tokenBlacklistService.addToBlacklist(accessToken);
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGOUT_SUCCESS, null));

@@ -271,7 +271,7 @@
 //}
 //
 
-package vn.edu.iuh.fit.services;
+package vn.edu.iuh.fit.services.OAuthServices;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -281,14 +281,11 @@ import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.enums.AuthProvider;
-import vn.edu.iuh.fit.enums.Role;
-import vn.edu.iuh.fit.enums.UserStatus;
 import vn.edu.iuh.fit.models.User;
-import vn.edu.iuh.fit.repositories.UserRepository;
-import vn.edu.iuh.fit.services.interfaces.IOAuthVerifier;
-import vn.edu.iuh.fit.services.interfaces.IUserProvider;
-import vn.edu.iuh.fit.utils.JwtUtil;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import vn.edu.iuh.fit.services.UserService;
+import vn.edu.iuh.fit.services.interfaces.IOAuth.IOAuthVerifier;
+import vn.edu.iuh.fit.services.interfaces.IOAuth.IUserProvider;
+
 import java.util.Collections;
 
 @Service

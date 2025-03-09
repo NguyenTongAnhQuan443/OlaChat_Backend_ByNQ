@@ -1,4 +1,4 @@
-package vn.edu.iuh.fit.services.interfaces;
+package vn.edu.iuh.fit.services.interfaces.IOAuth;
 
 import vn.edu.iuh.fit.models.User;
 

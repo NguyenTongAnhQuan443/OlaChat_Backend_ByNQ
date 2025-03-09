@@ -1,9 +1,8 @@
-package vn.edu.iuh.fit.services;
+package vn.edu.iuh.fit.services.OAuthServices;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import vn.edu.iuh.fit.services.interfaces.IOAuthVerifier;
-import vn.edu.iuh.fit.services.interfaces.IUserProvider;
+import vn.edu.iuh.fit.services.interfaces.IOAuth.IOAuthVerifier;
+import vn.edu.iuh.fit.services.interfaces.IOAuth.IUserProvider;
 
 import java.util.Map;
 
