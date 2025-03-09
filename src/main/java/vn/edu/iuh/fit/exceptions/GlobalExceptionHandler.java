@@ -15,48 +15,39 @@ import vn.edu.iuh.fit.utils.ApiResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private final ExceptionResponseFactory responseFactory;
+
+    public GlobalExceptionHandler(ExceptionResponseFactory responseFactory) {
+        this.responseFactory = responseFactory;
+    }
 
     // 400 Bad Request - Yêu cầu không hợp lệ
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException ex, Model model) {
-        ApiResponse<Object> response = new ApiResponse<>();
-        response.setCode(ex.getCode());
-        response.setMessage(ex.getMessage());
-        response.setData(ex.getData());
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return responseFactory.create(HttpStatus.BAD_REQUEST, ex.getMessage(), ex.getData());
     }
 
     // 401 Unauthorized - Token thiếu, sai hoặc hết hạn
     @ExceptionHandler({ExpiredJwtException.class, SignatureException.class, UnsupportedJwtException.class, MalformedJwtException.class})
     public ResponseEntity<ApiResponse<Object>> handleJwtExceptions(Exception ex) {
-        ApiResponse<Object> response = new ApiResponse<>();
-        response.setCode(HttpStatus.UNAUTHORIZED.value());
-        response.setMessage("Token không hợp lệ hoặc đã hết hạn!");
-        response.setData(null);
-
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        return responseFactory.create(HttpStatus.UNAUTHORIZED, "Token không hợp lệ hoặc đã hết hạn!", null);
     }
 
     // 403 Forbidden - Không có quyền truy cập
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(AccessDeniedException ex) {
-        ApiResponse<Object> response = new ApiResponse<>();
-        response.setCode(HttpStatus.FORBIDDEN.value());
-        response.setMessage("Bạn không có quyền truy cập tài nguyên này!");
-        response.setData(null);
+        return responseFactory.create(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập tài nguyên này!", null);
+    }
 
-        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    // 404 Not Found - Không tìm thấy tài nguyên
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUserNotFoundException(UsernameNotFoundException ex) {
+        return responseFactory.create(HttpStatus.NOT_FOUND, "Người dùng không tồn tại!", null);
     }
 
     // 500 Internal Server Error - Lỗi không xác định
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAllExceptions(Exception ex) {
-        ApiResponse<Object> response = new ApiResponse<>();
-        response.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.setMessage("Có lỗi xảy ra trên máy chủ: " + ex.getMessage());
-        response.setData(null);
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return responseFactory.create(HttpStatus.INTERNAL_SERVER_ERROR, "Có lỗi xảy ra trên máy chủ: " + ex.getMessage(), null);
     }
 }
