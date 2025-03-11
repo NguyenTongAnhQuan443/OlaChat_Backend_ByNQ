@@ -1,4 +1,4 @@
-package vn.edu.iuh.fit.services.OAuthServices;
+package vn.edu.iuh.fit.services.Authentication;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,19 +13,17 @@ import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 import vn.edu.iuh.fit.services.RefreshTokenService;
 import vn.edu.iuh.fit.services.TokenBlacklistService;
-import vn.edu.iuh.fit.services.interfaces.IOAuth.IOAuthVerifier;
-import vn.edu.iuh.fit.services.interfaces.IOAuth.IUserProvider;
+import vn.edu.iuh.fit.services.interfaces.IOAuthService;
 import vn.edu.iuh.fit.utils.ApiResponse;
 import vn.edu.iuh.fit.utils.JwtUtil;
 
-import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -33,23 +31,20 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
     private final TokenBlacklistService tokenBlacklistService;
-    private final OAuthServiceFactory oAuthServiceFactory;
+    private final OAuthProviderFactory oAuthServiceFactory;
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithOAuth(String provider, String idToken, String deviceId) {
         try {
-            IOAuthVerifier verifier = oAuthServiceFactory.getOAuthVerifier(provider);
-            IUserProvider userProvider = oAuthServiceFactory.getUserProvider(provider);
+            IOAuthService oauthService = oAuthServiceFactory.getOAuthService(provider);
+            String accessToken = oauthService.verifyToken(idToken);
+            User user = oauthService.getUserFromToken(idToken);
 
-            String accessToken = verifier.verifyToken(idToken);
-            User user = userProvider.getUserFromToken(idToken);
-
-            // Kiểm tra User đã có refreshToken hay chưa
             Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
             String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
 
             return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken)));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "OAuth token không hợp lệ !", null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "OAuth token không hợp lệ!", null));
         }
     }
 

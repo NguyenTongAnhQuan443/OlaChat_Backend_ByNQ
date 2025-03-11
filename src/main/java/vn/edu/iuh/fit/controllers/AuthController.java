@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.edu.iuh.fit.services.OAuthServices.AuthService;
+import vn.edu.iuh.fit.services.Authentication.AuthenticationService;
 import vn.edu.iuh.fit.utils.ApiResponse;
 
 import java.util.Map;
@@ -20,7 +20,7 @@ import java.util.Map;
 @Slf4j
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthenticationService authService;
 
     @PostMapping("/login-google")
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithGoogle(@RequestBody Map<String, String> request) {
