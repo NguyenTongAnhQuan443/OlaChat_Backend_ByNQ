@@ -13,7 +13,7 @@ import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 import vn.edu.iuh.fit.services.RefreshTokenService;
 import vn.edu.iuh.fit.services.TokenBlacklistService;
-import vn.edu.iuh.fit.services.interfaces.IOAuthService;
+import vn.edu.iuh.fit.services.interfaces.IOAuthProvider;
 import vn.edu.iuh.fit.utils.ApiResponse;
 import vn.edu.iuh.fit.utils.JwtUtil;
 
@@ -35,7 +35,7 @@ public class AuthenticationService {
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithOAuth(String provider, String idToken, String deviceId) {
         try {
-            IOAuthService oauthService = oAuthServiceFactory.getOAuthService(provider);
+            IOAuthProvider oauthService = oAuthServiceFactory.getOAuthService(provider);
             String accessToken = oauthService.verifyToken(idToken);
             User user = oauthService.getUserFromToken(idToken);
 

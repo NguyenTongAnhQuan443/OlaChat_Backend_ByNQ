@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.services.UserService;
-import vn.edu.iuh.fit.services.interfaces.IOAuthService;
+import vn.edu.iuh.fit.services.interfaces.IOAuthProvider;
 
 import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
-public class GoogleOAuthProvider implements IOAuthService {
+public class GoogleOAuthProvider implements IOAuthProvider {
 
     private final UserService userService;
     private static final Dotenv dotenv = Dotenv.load();
