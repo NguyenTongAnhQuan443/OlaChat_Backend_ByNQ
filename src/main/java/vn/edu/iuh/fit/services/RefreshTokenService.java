@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.utils.JwtUtil;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RefreshTokenService {
     private final StringRedisTemplate redisTemplate;
+    private final JwtUtil jwtUtil;
     private static final String REFRESH_TOKEN_PREFIX = "refreshTokens:";
 
     // Truy cập Redis Hash operations
@@ -21,8 +23,7 @@ public class RefreshTokenService {
     }
 
     public String createRefreshToken(UUID userId, String deviceId) {
-        String token = UUID.randomUUID().toString();
-        long expiryDuration = 1000 * 60 * 60 * 24 * 7; // 7 ngày
+        String token = jwtUtil.generateRefreshToken(userId);
 
         // Xóa token cũ nếu có trước khi tạo mới
         deleteRefreshToken(userId.toString(), deviceId);
@@ -30,7 +31,6 @@ public class RefreshTokenService {
         // Lưu token mới vào Redis Hash
         String key = REFRESH_TOKEN_PREFIX + deviceId;
         getHashOps().put(key, userId.toString(), token);
-        redisTemplate.expire(key, Duration.ofMillis(expiryDuration));
 
         return token;
     }
@@ -41,25 +41,19 @@ public class RefreshTokenService {
     }
 
     public Optional<String> findByTokenAndDevice(String token, String deviceId) {
-        String key = REFRESH_TOKEN_PREFIX + deviceId;
+        try {
+            String userId = jwtUtil.extractUserId(token, true).toString();
+            String key = REFRESH_TOKEN_PREFIX + deviceId;
 
-        for (var entry : getHashOps().entries(key).entrySet()) {
-            if (entry.getValue().equals(token)) {
-                return Optional.of(entry.getValue());
+            for (var entry : getHashOps().entries(key).entrySet()) {
+                if (entry.getValue().equals(token)) {
+                    return Optional.of(entry.getValue());
+                }
             }
+            return Optional.empty();
+        } catch (Exception e) {
+            return Optional.empty(); // Token không hợp lệ
         }
-        return Optional.empty();
-    }
-
-    public Optional<String> findUserIdByDeviceAndToken(String deviceId, String token) {
-        String key = REFRESH_TOKEN_PREFIX + deviceId;
-
-        for (var entry : getHashOps().entries(key).entrySet()) {
-            if (entry.getValue().equals(token)) {
-                return Optional.of(entry.getKey()); // Trả về userId
-            }
-        }
-        return Optional.empty();
     }
 
     public void deleteRefreshToken(String userId, String deviceId) {

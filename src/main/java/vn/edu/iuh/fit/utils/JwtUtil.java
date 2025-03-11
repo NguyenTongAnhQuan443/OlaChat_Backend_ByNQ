@@ -8,6 +8,7 @@ import vn.edu.iuh.fit.constants.AuthConstants;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 
+import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Date;
@@ -15,17 +16,21 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
+import io.jsonwebtoken.security.Keys;
+
 @Component
 @RequiredArgsConstructor
 public class JwtUtil {
 
     private static final PrivateKey PRIVATE_KEY;
     private static final PublicKey PUBLIC_KEY;
+    private static Key REFRESH_SECRET_KEY;
 
     static {
         try {
             PRIVATE_KEY = KeyLoader.loadPrivateKey("private.pem");
             PUBLIC_KEY = KeyLoader.loadPublicKey("public.pem");
+            REFRESH_SECRET_KEY = KeyLoader.loadRefreshSecretKey("refresh_secret.pem");
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi tải khóa RSA", e);
         }
@@ -33,13 +38,15 @@ public class JwtUtil {
 
     private final UserRepository userRepository;
 
-    private Claims extractAllClaims(String token) {
+    private Claims extractAllClaims(String token, boolean isRefreshToken) {
         try {
-            return Jwts.parser()
-                    .setSigningKey(PUBLIC_KEY)  // Dùng public key để xác minh
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+            JwtParserBuilder parserBuilder = Jwts.parser();
+            if (isRefreshToken) {
+                parserBuilder.setSigningKey(REFRESH_SECRET_KEY); // Dùng Secret Key cho HS256
+            } else {
+                parserBuilder.setSigningKey(PUBLIC_KEY); // Dùng Public Key cho RS256
+            }
+            return parserBuilder.build().parseClaimsJws(token).getBody();
         } catch (MalformedJwtException e) {
             throw new MalformedJwtException(AuthConstants.MESSAGE_MALFORMED_JWT);
         } catch (ExpiredJwtException e) {
@@ -52,55 +59,54 @@ public class JwtUtil {
         }
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        return claimsResolver.apply(extractAllClaims(token));
+    public <T> T extractClaim(String token, boolean isRefreshToken, Function<Claims, T> claimsResolver) {
+        return claimsResolver.apply(extractAllClaims(token, isRefreshToken));
     }
 
-    public String extractPhoneNumber(String token) {
-        return extractClaim(token, Claims::getSubject);
+    public Date extractExpiration(String token, boolean isRefreshToken) {
+        return extractClaim(token, isRefreshToken, Claims::getExpiration);
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    public boolean isTokenExpired(String token, boolean isRefreshToken) {
+        return extractExpiration(token, isRefreshToken).before(new Date());
     }
 
-    public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    public boolean validateToken(String token, UserDetails userDetails) {
+    public boolean validateToken(String token, boolean isRefreshToken, UserDetails userDetails) {
         try {
-            UUID userId = extractUserId(token);
+            UUID userId = extractUserId(token, isRefreshToken);
             Optional<User> userOpt = userRepository.findById(userId);
 
             if (userOpt.isEmpty()) {
-                System.out.println("User not found for ID: " + userId);
                 return false;
             }
 
-            String usernameFromToken = userOpt.get().getEmail() != null ? userOpt.get().getEmail() : userOpt.get().getPhoneNumber();
-            String usernameFromUserDetails = userDetails.getUsername();
-
-            if (!usernameFromToken.equals(usernameFromUserDetails)) {
-                System.out.println("Username from token does not match UserDetails: " + usernameFromToken + " vs " + usernameFromUserDetails);
-                return false;
-            }
-
-            return !isTokenExpired(token);
+            return !isTokenExpired(token, isRefreshToken);
         } catch (Exception e) {
-            System.out.println("Token validation error: " + e.getMessage());
             return false;
         }
     }
 
-    public String generateToken(UUID userId) {
-        return Jwts.builder().setSubject(userId.toString()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
-                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256).compact();
+    public String generateAccessToken(UUID userId) {
+        return Jwts.builder()
+                .setSubject(userId.toString())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
+                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256) // Dùng RSA
+                .compact();
     }
 
-    public UUID extractUserId(String token) {
+    public String generateRefreshToken(UUID userId) {
+        return Jwts.builder()
+                .setSubject(userId.toString())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 10)) // 10 ngày
+                .signWith(REFRESH_SECRET_KEY, SignatureAlgorithm.HS256) // Dùng HMAC SHA256
+                .compact();
+    }
+
+    public UUID extractUserId(String token, boolean isRefreshToken) {
         try {
-            String userIdString = extractClaim(token, Claims::getSubject);
+            String userIdString = extractAllClaims(token, isRefreshToken).getSubject();
             return UUID.fromString(userIdString);
         } catch (IllegalArgumentException e) {
             throw new MalformedJwtException("User ID trong token không hợp lệ" + e.getMessage());

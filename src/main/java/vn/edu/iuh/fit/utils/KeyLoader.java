@@ -1,7 +1,14 @@
 package vn.edu.iuh.fit.utils;
 
+import io.jsonwebtoken.security.Keys;
+
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -12,6 +19,18 @@ import java.util.Base64;
 public class KeyLoader {
 
     private static final String KEY_PATH = "certs/";
+
+    public static Key loadRefreshSecretKey(String filename) throws IOException {
+        InputStream inputStream = KeyLoader.class.getClassLoader().getResourceAsStream(KEY_PATH + filename);
+        if (inputStream == null) {
+            throw new IOException("Không tìm thấy file khóa Refresh Token trong resources: " + KEY_PATH + filename);
+        }
+
+        // Đọc nội dung file
+        String keyContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).trim();
+        byte[] decodedKey = Base64.getDecoder().decode(keyContent);
+        return Keys.hmacShaKeyFor(decodedKey);
+    }
 
     public static PrivateKey loadPrivateKey(String filename) throws Exception {
         return loadKey(filename, true);
@@ -45,4 +64,6 @@ public class KeyLoader {
             return (T) keyFactory.generatePublic(keySpec);
         }
     }
+
+
 }

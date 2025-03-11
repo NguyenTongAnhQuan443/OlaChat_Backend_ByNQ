@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId = jwtUtil.extractUserId(token, false);
             Optional<User> userOpt = userRepository.findById(userId);
             if (userOpt.isEmpty()) {
                 sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, AuthConstants.MESSAGE_USER_ID_NOT_FOUND);
@@ -73,7 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             UserDetails userDetails = customUserDetailsService.loadUserByUserId(userId);
-            if (jwtUtil.validateToken(token, userDetails)) {
+            if (jwtUtil.validateToken(token, false, userDetails)) {
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
