@@ -9,7 +9,6 @@ import vn.edu.iuh.fit.constants.AuthConstants;
 import vn.edu.iuh.fit.constants.CodeConstants;
 import vn.edu.iuh.fit.dtos.UserDTO;
 import vn.edu.iuh.fit.mappers.UserMapper;
-import vn.edu.iuh.fit.models.RefreshToken;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 import vn.edu.iuh.fit.services.RefreshTokenService;
@@ -45,8 +44,8 @@ public class AuthService {
             User user = userProvider.getUserFromToken(idToken);
 
             // Kiểm tra User đã có refreshToken hay chưa
-            Optional<RefreshToken> existingRefreshToken = refreshTokenService.findByUserAndDevice(user, deviceId);
-            String refreshToken = existingRefreshToken.map(RefreshToken::getToken).orElseGet(() -> refreshTokenService.createRefreshToken(user, deviceId).getToken());
+            Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
+            String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
 
             return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken)));
         } catch (Exception e) {
@@ -64,8 +63,8 @@ public class AuthService {
         String accessToken = jwtUtil.generateToken(user.getId());
         UserDTO userDTO = userMapper.toUserDTO(user);
 
-        Optional<RefreshToken> existingRefreshToken = refreshTokenService.findByUserAndDevice(user, deviceId);
-        String refreshToken = existingRefreshToken.map(RefreshToken::getToken).orElseGet(() -> refreshTokenService.createRefreshToken(user, deviceId).getToken());
+        Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
+        String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken)));
     }
@@ -75,22 +74,18 @@ public class AuthService {
             return ResponseEntity.badRequest().body(new ApiResponse<>(CodeConstants.CODE_BAD_REQUEST, AuthConstants.MESSAGE_REFRESH_TOKEN_REQUIRED, null));
         }
 
-        // Kiểm tra token có tồn tại với deviceId hay không
-        Optional<RefreshToken> tokenOptional = refreshTokenService.findByTokenAndDevice(refreshToken, deviceId);
+        Optional<String> tokenOptional = refreshTokenService.findByTokenAndDevice(refreshToken, deviceId);
         if (tokenOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(CodeConstants.CODE_FORBIDDEN, AuthConstants.MESSAGE_REFRESH_TOKEN_INVALID, null));
         }
 
-        RefreshToken token = tokenOptional.get();
-
-        // Kiểm tra token có hết hạn không
-        if (token.getExpiryDate().before(new Date())) {
-            refreshTokenService.deleteByUserAndDevice(token.getUser(), deviceId); // Xóa token hết hạn
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(CodeConstants.CODE_FORBIDDEN, AuthConstants.MESSAGE_REFRESH_TOKEN_EXPIRED, null));
+        Optional<String> userIdOptional = refreshTokenService.findUserIdByDeviceAndToken(deviceId, refreshToken);
+        if (userIdOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(CodeConstants.CODE_FORBIDDEN, AuthConstants.MESSAGE_REFRESH_TOKEN_INVALID, null));
         }
 
-        // Tạo access token mới
-        String newAccessToken = jwtUtil.generateToken(token.getUser().getId());
+        String userId = userIdOptional.get();
+        String newAccessToken = jwtUtil.generateToken(UUID.fromString(userId));
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_REFRESH_TOKEN_SUCCESS, Map.of("accessToken", newAccessToken)));
     }
 
@@ -107,19 +102,19 @@ public class AuthService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, AuthConstants.MESSAGE_INVALID_ACCESS_TOKEN, null));
         }
 
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(CodeConstants.CODE_NOT_FOUND, AuthConstants.MESSAGE_USER_NOT_FOUND, null));
-        }
-
-        User user = userOpt.get();
-        Optional<RefreshToken> tokenOptional = refreshTokenService.findByUserAndDevice(user, deviceId);
+        // 🔹 Kiểm tra xem user có refreshToken trên deviceId này không
+        Optional<String> tokenOptional = refreshTokenService.findByUserAndDevice(userId, deviceId);
         if (tokenOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(CodeConstants.CODE_NOT_FOUND, AuthConstants.MESSAGE_DEVICE_LOGOUT_NOT_FOUND, null));
         }
-        refreshTokenService.deleteByUserAndDevice(user, deviceId);
+
+        // 🔹 Xóa refresh token khỏi Redis
+        refreshTokenService.deleteByUserAndDevice(userId.toString(), deviceId);
+
+        // 🔹 Thêm accessToken vào blacklist để chặn sử dụng lại
         tokenBlacklistService.addToBlacklist(accessToken);
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGOUT_SUCCESS, null));
     }
+
 }
