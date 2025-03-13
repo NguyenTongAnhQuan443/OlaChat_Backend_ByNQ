@@ -5,6 +5,7 @@ import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.enums.Role;
 import vn.edu.iuh.fit.enums.UserStatus;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -24,4 +25,5 @@ public class UserDTO {
     private String bio;
     private UserStatus status;
     private Role role;
+    private LocalDateTime dob;
 }
