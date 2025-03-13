@@ -16,6 +16,9 @@ public class OlaChatBackEndByNqApplication {
         System.setProperty("REDIS_PORT", dotenv.get("REDIS_PORT"));
         System.setProperty("REDIS_USER", dotenv.get("REDIS_USER"));
         System.setProperty("REDIS_PASS", dotenv.get("REDIS_PASS"));
+        System.setProperty("ACCOUNT_SID", dotenv.get("ACCOUNT_SID"));
+        System.setProperty("AUTH_TOKEN", dotenv.get("AUTH_TOKEN"));
+        System.setProperty("TWILIO_PHONE_NUMBER", dotenv.get("TWILIO_PHONE_NUMBER"));
 
         SpringApplication.run(OlaChatBackEndByNqApplication.class, args);
     }

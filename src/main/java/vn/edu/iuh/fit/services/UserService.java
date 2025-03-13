@@ -21,6 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final TwilioService twilioService;
 
     public User getUserById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User không tồn tại!"));
@@ -44,15 +45,23 @@ public class UserService {
         return userRepository.findUserByPhoneNumber(phonenumber);
     }
 
-    public User registerUser(RegisterUserDTO registerUserDTO) {
-        Optional<User> existingUser = userRepository.findUserByPhoneNumber(registerUserDTO.getPhoneNumber());
-
+    public void sendOtpToUser(String phoneNumber) {
+        Optional<User> existingUser = userRepository.findUserByPhoneNumber(phoneNumber);
         if (existingUser.isPresent()) {
             throw new RuntimeException("Số điện thoại đã được sử dụng!");
         }
+        twilioService.sendOtp(phoneNumber);
+    }
+
+    public User registerUserWithOtp(RegisterUserDTO registerUserDTO, String otp) {
+        if (!twilioService.verifyOtp(registerUserDTO.getPhoneNumber(), otp)) {
+            throw new RuntimeException("Mã OTP không hợp lệ hoặc đã hết hạn!");
+        }
+
+        // Xóa OTP sau khi xác thực thành công
+        twilioService.removeOtp(registerUserDTO.getPhoneNumber());
 
         User newUser = userMapper.toUser(registerUserDTO);
-        newUser.setPassword(passwordEncoder.encode(registerUserDTO.getPassword()));
         return userRepository.save(newUser);
     }
 }

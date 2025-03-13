@@ -222,8 +222,12 @@
             <artifactId>google-http-client-jackson2</artifactId>
             <version>1.46.3</version>
         </dependency>
-
-
+        <!-- https://mvnrepository.com/artifact/com.twilio.sdk/twilio -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>10.7.0</version>
+        </dependency>
 
     </dependencies>
 

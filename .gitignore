@@ -41,3 +41,5 @@ src/main/resources/.env
 # Bỏ qua toàn bộ thư mục chứa certificate
 src/main/resources/certs/
 
+# Bỏ qua toàn bộ thư mục chứa firebase
+src/main/resources/firebase/
