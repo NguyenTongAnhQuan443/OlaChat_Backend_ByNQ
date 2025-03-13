@@ -18,10 +18,10 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int redisPort;
 
-    @Value("${spring.data.redis.password:}") // Đặt mặc định là rỗng nếu không có password
+    @Value("${spring.data.redis.password:}")
     private String redisPassword;
 
-    @Value("${spring.data.redis.username:}") // Đặt mặc định là rỗng nếu không có username
+    @Value("${spring.data.redis.username:}")
     private String redisUsername;
 
     @Bean

@@ -7,7 +7,6 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class OlaChatBackEndByNqApplication {
 
     public static void main(String[] args) {
-
         Dotenv dotenv = Dotenv.load();
         System.setProperty("DB_URL", dotenv.get("DB_URL"));
         System.setProperty("DB_USERNAME", dotenv.get("DB_USERNAME"));
@@ -19,7 +18,8 @@ public class OlaChatBackEndByNqApplication {
         System.setProperty("ACCOUNT_SID", dotenv.get("ACCOUNT_SID"));
         System.setProperty("AUTH_TOKEN", dotenv.get("AUTH_TOKEN"));
         System.setProperty("TWILIO_PHONE_NUMBER", dotenv.get("TWILIO_PHONE_NUMBER"));
-
+        System.setProperty("MAIL_USERNAME", dotenv.get("MAIL_USERNAME"));
+        System.setProperty("MAIL_PASSWORD", dotenv.get("MAIL_PASSWORD"));
         SpringApplication.run(OlaChatBackEndByNqApplication.class, args);
     }
 

@@ -11,6 +11,7 @@ import vn.edu.iuh.fit.mappers.UserMapper;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +23,53 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final TwilioService twilioService;
+    private final EmailService emailService;
+    private final RedisService redisService;
+//
+    private final SecureRandom secureRandom = new SecureRandom();
 
+    // Tạo OTP 6 số
+    private String generateOtp() {
+        int otp = 100000 + secureRandom.nextInt(900000);
+        return String.valueOf(otp);
+    }
+
+    // Gửi OTP đến email
+    public void sendPasswordResetOtp(String email) {
+        Optional<User> userOpt = userRepository.findUserByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("Email không tồn tại trong hệ thống!");
+        }
+
+        if (!redisService.isAllowedToRequestReset(email)) {
+            long waitTimeMillis = redisService.getTimeUntilNextRequest(email);
+            long waitMinutes = (waitTimeMillis / 60000);
+            throw new RuntimeException("Bạn đã yêu cầu đặt lại mật khẩu gần đây. Vui lòng thử lại sau " + waitMinutes + " phút.");
+        }
+
+        String otp = generateOtp();
+        redisService.saveOtp(email, otp);
+        emailService.sendOtpEmail(email, otp);
+        redisService.setResetAttemptLimit(email);
+    }
+
+    // Xác thực OTP và đặt lại mật khẩu
+    public void resetPasswordWithOtp(String email, String otp, String newPassword) {
+        String storedOtp = redisService.getOtp(email);
+        if (storedOtp == null || !storedOtp.equals(otp)) {
+            throw new RuntimeException("Mã OTP không hợp lệ hoặc đã hết hạn!");
+        }
+
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại!"));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Xóa OTP sau khi sử dụng
+        redisService.deleteOtp(email);
+    }
+//
     public User getUserById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User không tồn tại!"));
     }

@@ -14,6 +14,7 @@ import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.services.UserService;
 import vn.edu.iuh.fit.utils.ApiResponse;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,7 +32,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<Object>> sendOtp(@RequestParam String phoneNumber) {
         userService.sendOtpToUser(phoneNumber);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ApiResponse<>(200, "\"Mã OTP đã được gửi đến số điện thoại của bạn.", null)
+                new ApiResponse<>(200, "Mã OTP đã được gửi đến số điện thoại của bạn.", null)
         );
     }
 
@@ -64,4 +65,24 @@ public class UserController {
         UserDTO userDTO = userMapper.toUserDTO(user.orElse(null));
         return ResponseEntity.ok(new ApiResponse<>(200, "Lấy thông tin thành công!", userDTO));
     }
+
+    //
+    @Operation(summary = "Yêu cầu OTP đặt lại mật khẩu qua email")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+        userService.sendPasswordResetOtp(email);
+        return ResponseEntity.ok("Mã OTP đã được gửi đến email của bạn.");
+    }
+
+    @Operation(summary = "Xác thực OTP và đặt lại mật khẩu")
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String otp = request.get("otp");
+        String newPassword = request.get("newPassword");
+
+        userService.resetPasswordWithOtp(email, otp, newPassword);
+        return ResponseEntity.ok("Mật khẩu đã được cập nhật.");
+    }
+
 }
