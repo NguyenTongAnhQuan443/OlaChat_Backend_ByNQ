@@ -47,7 +47,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Đăng xuất", description = "Dùng accessToken để đăng xuất")
-    @DeleteMapping("/logout") // ✅ Đổi từ POST thành DELETE để chuẩn RESTful
+    @DeleteMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout(@Valid @RequestBody LogoutRequestDTO request) {
         return authService.logout(request.getAccessToken(), request.getDeviceId());
     }

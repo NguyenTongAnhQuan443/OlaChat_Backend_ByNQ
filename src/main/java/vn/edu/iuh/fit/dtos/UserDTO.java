@@ -1,6 +1,7 @@
 package vn.edu.iuh.fit.dtos;
 
 import lombok.*;
+import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.enums.Role;
 import vn.edu.iuh.fit.enums.UserStatus;
 
@@ -18,6 +19,8 @@ public class UserDTO {
     private String email;
     private String avatar;
     private String coverPhoto;
+    private String phoneNumber;
+    private AuthProvider authProvider;
     private String bio;
     private UserStatus status;
     private Role role;

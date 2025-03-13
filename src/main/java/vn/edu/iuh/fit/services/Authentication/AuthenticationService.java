@@ -88,30 +88,6 @@ public class AuthenticationService {
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken)));
     }
 
-    //    public ResponseEntity<ApiResponse<Map<String, Object>>> refreshAccessToken(String refreshToken, String deviceId, HttpServletResponse response) {
-//        try {
-//            // Kiểm tra refreshToken có hợp lệ không
-//            String userId = jwtUtil.extractUserId(refreshToken, true).toString(); // Giải mã token
-//            if (userId == null) {
-//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(CodeConstants.CODE_FORBIDDEN, "Refresh token không hợp lệ!", null));
-//            }
-//
-//            // Kiểm tra refreshToken có trong Redis không
-//            Optional<String> storedToken = refreshTokenService.findByTokenAndDevice(refreshToken, deviceId);
-//            if (storedToken.isEmpty()) {
-//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse<>(CodeConstants.CODE_FORBIDDEN, "Refresh token không tồn tại!", null));
-//            }
-//
-//            // Tạo Access Token mới
-//            String newAccessToken = jwtUtil.generateAccessToken(UUID.fromString(userId));
-//
-//            return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, "Làm mới Access Token thành công!", Map.of(
-//                    "accessToken", newAccessToken
-//            )));
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(CodeConstants.CODE_SERVER_ERROR, "Lỗi hệ thống!" + e.getMessage(), null));
-//        }
-//    }
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshAccessToken(
             HttpServletRequest request, HttpServletResponse response) {
         try {
