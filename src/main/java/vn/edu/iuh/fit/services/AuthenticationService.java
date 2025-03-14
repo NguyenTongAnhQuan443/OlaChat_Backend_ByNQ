@@ -1,5 +1,10 @@
-package vn.edu.iuh.fit.services.Authentication;
+package vn.edu.iuh.fit.services;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -10,84 +15,57 @@ import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.constants.AuthConstants;
 import vn.edu.iuh.fit.constants.CodeConstants;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import vn.edu.iuh.fit.dtos.UserDTO;
+import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.mappers.UserMapper;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
-import vn.edu.iuh.fit.services.RefreshTokenService;
-import vn.edu.iuh.fit.services.TokenBlacklistService;
-import vn.edu.iuh.fit.services.interfaces.IOAuthProvider;
 import vn.edu.iuh.fit.utils.ApiResponse;
 import vn.edu.iuh.fit.utils.JwtUtil;
 import org.springframework.http.ResponseCookie;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
 
+    private static final Dotenv dotenv = Dotenv.load();
+    private static final String GOOGLE_CLIENT_ID = dotenv.get("GOOGLE_CLIENT_ID");
     private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
     private final TokenBlacklistService tokenBlacklistService;
-    private final OAuthProviderFactory oAuthServiceFactory;
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithPhoneNumber(String phoneNumber, String password, String deviceId, HttpServletResponse response) {
         Optional<User> userOpt = userRepository.findUserByPhoneNumber(phoneNumber);
         if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, AuthConstants.MESSAGE_LOGIN_FAILED, null));
         }
-
-        User user = userOpt.get();
-        String accessToken = jwtUtil.generateAccessToken(user.getId());
-        UserDTO userDTO = userMapper.toUserDTO(user);
-
-        Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
-        String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
-
-        // Đặt Refresh Token vào HTTP-only Cookie
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(10 * 24 * 60 * 60)
-                .build();
-
-        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-        return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken, "user", userDTO)));
+        return buildAuthResponse(userOpt.get(), deviceId, response);
     }
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithOAuth(String provider, String idToken, String deviceId, HttpServletResponse response) {
-        try {
-            IOAuthProvider oauthService = oAuthServiceFactory.getOAuthService(provider);
-            String email = oauthService.verifyToken(idToken);
-            User user = oauthService.getUserFromToken(idToken);
-            UserDTO userDTO = userMapper.toUserDTO(user);
-            String accessToken = jwtUtil.generateAccessToken(user.getId());
-
-            Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
-            String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
-
-            // Đặt Refresh Token vào HTTP-only Cookie
-            ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                    .httpOnly(true)
-                    .secure(true)
-                    .path("/")
-                    .maxAge(10 * 24 * 60 * 60)
-                    .build();
-
-            response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-            return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("idToken", idToken, "accessToken", accessToken, "user", userDTO)));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "OAuth token không hợp lệ - " + e.getMessage(), null));
+        User user = null;
+        System.out.println("Received idToken: " + idToken); // In ra idToken
+        switch (provider.toUpperCase()) {
+            case "GOOGLE":
+                user = authenticateGoogle(idToken);
+                break;
+            default:
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(CodeConstants.CODE_BAD_REQUEST, "Phương thức OAuth không hợp lệ!", null));
         }
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "OAuth token không hợp lệ!", null));
+        }
+
+        return buildAuthResponse(user, deviceId, response);
     }
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshAccessToken(
@@ -170,6 +148,52 @@ public class AuthenticationService {
         tokenBlacklistService.addToBlacklist(accessToken);
 
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGOUT_SUCCESS, null));
+    }
+
+    private User authenticateGoogle(String idToken) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
+                    .build();
+
+            GoogleIdToken googleIdToken = verifier.verify(idToken);
+            if (googleIdToken == null) {
+                System.out.println("Lỗi: Token Google không hợp lệ hoặc không thể xác minh!");
+                return null;
+            }
+
+            GoogleIdToken.Payload payload = googleIdToken.getPayload();
+            System.out.println("Decoded Google ID Token: " + payload);
+
+            return userService.findOrCreateUser(
+                    payload.getEmail(),
+                    (String) payload.get("name"),
+                    (String) payload.get("picture"),
+                    AuthProvider.GOOGLE
+            );
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private ResponseEntity<ApiResponse<Map<String, Object>>> buildAuthResponse(User user, String deviceId, HttpServletResponse response) {
+        String accessToken = jwtUtil.generateAccessToken(user.getId());
+        UserDTO userDTO = userMapper.toUserDTO(user);
+
+        Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
+        String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
+
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(10 * 24 * 60 * 60)
+                .build();
+
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+        return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, "Đăng nhập thành công!",
+                Map.of("accessToken", accessToken, "user", userDTO)
+        ));
     }
 
 }

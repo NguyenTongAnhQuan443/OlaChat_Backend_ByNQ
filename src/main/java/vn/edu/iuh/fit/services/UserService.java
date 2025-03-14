@@ -25,16 +25,35 @@ public class UserService {
     private final TwilioService twilioService;
     private final EmailService emailService;
     private final RedisService redisService;
-//
     private final SecureRandom secureRandom = new SecureRandom();
 
-    // Tạo OTP 6 số
+    public User getUserById(UUID userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+    }
+
+    public Optional<User> getUserByPhonenumber(String phonenumber) {
+        return userRepository.findUserByPhoneNumber(phonenumber);
+    }
+    
+    public User findOrCreateUser(String email, String displayName, String avatar, AuthProvider provider) {
+        return userRepository.findUserByEmail(email).orElseGet(() -> {
+            User newUser = User.builder()
+                    .email(email)
+                    .displayName(displayName)
+                    .avatar(avatar)
+                    .authProvider(provider)
+                    .role(Role.USER)
+                    .status(UserStatus.ACTIVE)
+                    .build();
+            return userRepository.save(newUser);
+        });
+    }
+
     private String generateOtp() {
         int otp = 100000 + secureRandom.nextInt(900000);
         return String.valueOf(otp);
     }
 
-    // Gửi OTP đến email
     public void sendPasswordResetOtp(String email) {
         Optional<User> userOpt = userRepository.findUserByEmail(email);
         if (userOpt.isEmpty()) {
@@ -68,28 +87,6 @@ public class UserService {
 
         // Xóa OTP sau khi sử dụng
         redisService.deleteOtp(email);
-    }
-//
-    public User getUserById(UUID userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User không tồn tại!"));
-    }
-
-    public User findOrCreateUser(String email, String displayName, String avatar, AuthProvider provider) {
-        return userRepository.findUserByEmail(email).orElseGet(() -> {
-            User newUser = User.builder()
-                    .email(email)
-                    .displayName(displayName)
-                    .avatar(avatar)
-                    .authProvider(provider)
-                    .role(Role.USER)
-                    .status(UserStatus.ACTIVE)
-                    .build();
-            return userRepository.save(newUser);
-        });
-    }
-
-    public Optional<User> getUserByPhonenumber(String phonenumber) {
-        return userRepository.findUserByPhoneNumber(phonenumber);
     }
 
     public void sendOtpToUser(String phoneNumber) {

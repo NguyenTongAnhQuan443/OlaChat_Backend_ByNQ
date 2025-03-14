@@ -12,7 +12,7 @@ import vn.edu.iuh.fit.dtos.LoginRequestDTO;
 import vn.edu.iuh.fit.dtos.LogoutRequestDTO;
 import vn.edu.iuh.fit.dtos.PhoneLoginRequestDTO;
 import vn.edu.iuh.fit.dtos.RefreshTokenRequestDTO;
-import vn.edu.iuh.fit.services.Authentication.AuthenticationService;
+import vn.edu.iuh.fit.services.AuthenticationService;
 import vn.edu.iuh.fit.utils.ApiResponse;
 
 import java.util.Map;
@@ -31,7 +31,7 @@ public class AuthController {
             @Valid @RequestBody PhoneLoginRequestDTO request, HttpServletResponse response) {
         return authService.loginWithPhoneNumber(request.getPhoneNumber(), request.getPassword(), request.getDeviceId(), response);
     }
-    
+
     @Operation(summary = "Đăng nhập bằng GOOGLE", description = "Frontend gửi idToken và deviceId lên để thực hiện đăng nhập")
     @PostMapping("/login-google")
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithGoogle(
