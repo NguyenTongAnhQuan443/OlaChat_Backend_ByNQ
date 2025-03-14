@@ -18,13 +18,15 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setTo(toEmail);
-            helper.setSubject("OlaChat Social - Mã OTP đặt lại mật khẩu của bạn");
+            helper.setSubject("OlaChat Social");
             helper.setText(
-                    "<p>Xin chào,</p>" +
+                    "<p>OlaChat Social - Xin chào.</p>" +
                             "<p>Bạn đã yêu cầu đặt lại mật khẩu. Đây là mã OTP của bạn:</p>" +
                             "<h2 style='color:blue;'>" + otp + "</h2>" +
                             "<p>OTP này có hiệu lực trong 5 phút.</p>" +
-                            "<p>Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>",
+                            "<p>Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>" +
+                            "<p>OlaChat Team</p>" +
+                            "<p>Trân trọng.</p>",
                     true
             );
             mailSender.send(message);

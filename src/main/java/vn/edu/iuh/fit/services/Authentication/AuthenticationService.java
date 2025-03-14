@@ -11,6 +11,7 @@ import vn.edu.iuh.fit.constants.AuthConstants;
 import vn.edu.iuh.fit.constants.CodeConstants;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import vn.edu.iuh.fit.dtos.UserDTO;
 import vn.edu.iuh.fit.mappers.UserMapper;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
@@ -38,31 +39,6 @@ public class AuthenticationService {
     private final TokenBlacklistService tokenBlacklistService;
     private final OAuthProviderFactory oAuthServiceFactory;
 
-    public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithOAuth(String provider, String idToken, String deviceId, HttpServletResponse response) {
-        try {
-            IOAuthProvider oauthService = oAuthServiceFactory.getOAuthService(provider);
-            String accessToken = oauthService.verifyToken(idToken);
-            User user = oauthService.getUserFromToken(idToken);
-
-            Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
-            String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
-
-            // Đặt Refresh Token vào HTTP-only Cookie
-            ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                    .httpOnly(true)  // Ngăn JavaScript truy cập
-                    .secure(true)    // Chỉ gửi qua HTTPS
-                    .path("/")       // Có thể sử dụng trên toàn bộ domain
-                    .maxAge(10 * 24 * 60 * 60) // 10 ngày
-                    .build();
-
-            response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-
-            return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken)));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "OAuth token không hợp lệ!", null));
-        }
-    }
-
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithPhoneNumber(String phoneNumber, String password, String deviceId, HttpServletResponse response) {
         Optional<User> userOpt = userRepository.findUserByPhoneNumber(phoneNumber);
         if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
@@ -71,21 +47,47 @@ public class AuthenticationService {
 
         User user = userOpt.get();
         String accessToken = jwtUtil.generateAccessToken(user.getId());
+        UserDTO userDTO = userMapper.toUserDTO(user);
 
         Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
         String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
 
         // Đặt Refresh Token vào HTTP-only Cookie
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)  // Ngăn JavaScript truy cập
-                .secure(true)    // Chỉ gửi qua HTTPS
-                .path("/")       // Có thể sử dụng trên toàn bộ domain
-                .maxAge(10 * 24 * 60 * 60) // 10 ngày
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(10 * 24 * 60 * 60)
                 .build();
 
         response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+        return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken, "user", userDTO)));
+    }
 
-        return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("accessToken", accessToken)));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithOAuth(String provider, String idToken, String deviceId, HttpServletResponse response) {
+        try {
+            IOAuthProvider oauthService = oAuthServiceFactory.getOAuthService(provider);
+            String email = oauthService.verifyToken(idToken);
+            User user = oauthService.getUserFromToken(idToken);
+            UserDTO userDTO = userMapper.toUserDTO(user);
+            String accessToken = jwtUtil.generateAccessToken(user.getId());
+
+            Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
+            String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
+
+            // Đặt Refresh Token vào HTTP-only Cookie
+            ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(10 * 24 * 60 * 60)
+                    .build();
+
+            response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+            return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGIN_SUCCESS, Map.of("idToken", idToken, "accessToken", accessToken, "user", userDTO)));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(CodeConstants.CODE_UNAUTHORIZED, "OAuth token không hợp lệ - " + e.getMessage(), null));
+        }
     }
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshAccessToken(

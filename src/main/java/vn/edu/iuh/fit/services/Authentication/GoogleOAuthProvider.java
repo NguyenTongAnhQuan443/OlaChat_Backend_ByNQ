@@ -6,6 +6,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.models.User;
@@ -14,7 +15,7 @@ import vn.edu.iuh.fit.services.interfaces.IOAuthProvider;
 
 import java.util.Collections;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class GoogleOAuthProvider implements IOAuthProvider {
 
@@ -30,11 +31,18 @@ public class GoogleOAuthProvider implements IOAuthProvider {
 
     @Override
     public String verifyToken(String idToken) throws Exception {
+        System.out.println("Received idToken: " + idToken);
+
         GoogleIdToken googleIdToken = getVerifier().verify(idToken);
         if (googleIdToken == null) {
+            System.out.println("Lỗi: Token Google không hợp lệ hoặc không thể xác minh!");
             throw new IllegalArgumentException("Token Google không hợp lệ");
         }
-        return googleIdToken.getPayload().getEmail();
+
+        GoogleIdToken.Payload payload = googleIdToken.getPayload();
+        System.out.println("Decoded Google ID Token: " + payload);
+
+        return payload.getEmail();
     }
 
     @Override
