@@ -20,7 +20,6 @@ import vn.edu.iuh.fit.constants.AuthConstants;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
 import vn.edu.iuh.fit.services.CustomUserDetailsService;
-import vn.edu.iuh.fit.services.TokenBlacklistService;
 import vn.edu.iuh.fit.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 
@@ -38,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
-    private final TokenBlacklistService tokenBlacklistService;
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
 
@@ -57,10 +55,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Kiểm tra token có đúng định dạng JWT không (phải chứa 2 dấu ".")
         if (!token.contains(".") || token.split("\\.").length != 3) {
             sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, AuthConstants.MESSAGE_INVALID_JWT_FORMAT);
-            return;
-        }
-        if (tokenBlacklistService.isTokenBlacklisted(token)) {
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, AuthConstants.MESSAGE_TOKEN_HAS_BEEN_DISABLED);
             return;
         }
 

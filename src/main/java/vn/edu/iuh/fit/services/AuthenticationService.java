@@ -38,7 +38,6 @@ public class AuthenticationService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
-    private final TokenBlacklistService tokenBlacklistService;
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithPhoneNumber(String phoneNumber, String password, String deviceId, HttpServletResponse response) {
         Optional<User> userOpt = userRepository.findUserByPhoneNumber(phoneNumber);
@@ -144,9 +143,6 @@ public class AuthenticationService {
         // Xóa refresh token khỏi Redis
         refreshTokenService.deleteByUserAndDevice(userId.toString(), deviceId);
 
-        // Thêm accessToken vào blacklist để chặn sử dụng lại
-        tokenBlacklistService.addToBlacklist(accessToken);
-
         return ResponseEntity.ok(new ApiResponse<>(CodeConstants.CODE_SUCCESS, AuthConstants.MESSAGE_LOGOUT_SUCCESS, null));
     }
 
@@ -177,12 +173,14 @@ public class AuthenticationService {
     }
 
     private ResponseEntity<ApiResponse<Map<String, Object>>> buildAuthResponse(User user, String deviceId, HttpServletResponse response) {
-        String accessToken = jwtUtil.generateAccessToken(user.getId());
         UserDTO userDTO = userMapper.toUserDTO(user);
+        // Kiểm tra Access Token còn hạn trong Redis
+        Optional<String> existingAccessToken = jwtUtil.findExistingAccessToken(user.getId());
+        String accessToken = existingAccessToken.orElseGet(() -> jwtUtil.generateAccessToken(user.getId()));
 
+        // Nếu Refresh Token còn hạn, sử dụng lại thay vì tạo mới
         Optional<String> existingRefreshToken = refreshTokenService.findByUserAndDevice(user.getId(), deviceId);
         String refreshToken = existingRefreshToken.orElseGet(() -> refreshTokenService.createRefreshToken(user.getId(), deviceId));
-
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(true)

@@ -2,6 +2,7 @@ package vn.edu.iuh.fit.utils;
 
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import vn.edu.iuh.fit.constants.AuthConstants;
@@ -14,6 +15,7 @@ import java.security.PublicKey;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import io.jsonwebtoken.security.Keys;
@@ -25,6 +27,7 @@ public class JwtUtil {
     private static final PrivateKey PRIVATE_KEY;
     private static final PublicKey PUBLIC_KEY;
     private static Key REFRESH_SECRET_KEY;
+    private final StringRedisTemplate redisTemplate;
 
     static {
         try {
@@ -87,12 +90,15 @@ public class JwtUtil {
     }
 
     public String generateAccessToken(UUID userId) {
-        return Jwts.builder()
+        String accessToken = Jwts.builder()
                 .setSubject(userId.toString())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
-                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256) // Dùng RSA
+                .signWith(PRIVATE_KEY, SignatureAlgorithm.RS256)
                 .compact();
+
+        saveAccessToken(userId, accessToken);
+        return accessToken;
     }
 
     public String generateRefreshToken(UUID userId) {
@@ -113,5 +119,18 @@ public class JwtUtil {
         } catch (Exception e) {
             throw new RuntimeException("Không thể trích xuất User ID từ token" + e.getMessage());
         }
+    }
+
+    public void saveAccessToken(UUID userId, String token) {
+        redisTemplate.opsForValue().set("accessToken:" + userId, token, 10, TimeUnit.HOURS); // Lưu trong 10 giờ
+    }
+
+    // Kiểm tra Access Token trong Redis
+    public Optional<String> findExistingAccessToken(UUID userId) {
+        String token = redisTemplate.opsForValue().get("accessToken:" + userId);
+        if (token != null && !isTokenExpired(token, false)) {
+            return Optional.of(token);
+        }
+        return Optional.empty();
     }
 }
