@@ -3,10 +3,12 @@ package vn.edu.iuh.fit.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.constants.CodeConstants;
 import vn.edu.iuh.fit.dtos.RegisterUserDTO;
 import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.enums.Role;
 import vn.edu.iuh.fit.enums.UserStatus;
+import vn.edu.iuh.fit.exceptions.CustomException;
 import vn.edu.iuh.fit.mappers.UserMapper;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
@@ -32,8 +34,8 @@ public class UserService {
     private final OtpStorageService otpStorageService;
 
 
-    public User getUserById(UUID userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+    public Optional<User> getUserById(UUID userId) {
+        return userRepository.findById(userId);
     }
 
     public Optional<User> getUserByPhonenumber(String phonenumber) {
@@ -57,13 +59,14 @@ public class UserService {
     public void sendPasswordResetOtp(String email) {
         Optional<User> userOpt = userRepository.findUserByEmail(email);
         if (userOpt.isEmpty()) {
-            throw new RuntimeException("Email không tồn tại trong hệ thống!");
+            throw new CustomException(CodeConstants.CODE_NOT_FOUND, "Email không tồn tại trong hệ thống!", null);
         }
 
         if (!redisService.isAllowedToRequestReset(email)) {
             long waitTimeMillis = redisService.getTimeUntilNextRequest(email);
             long waitMinutes = (waitTimeMillis / 60000);
-            throw new RuntimeException("Bạn đã yêu cầu đặt lại mật khẩu gần đây. Vui lòng thử lại sau " + waitMinutes + " phút.");
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST,
+                    "Bạn đã yêu cầu đặt lại mật khẩu gần đây. Vui lòng thử lại sau " + waitMinutes + " phút.", null);
         }
 
         String otp = generateOtp();
@@ -75,11 +78,11 @@ public class UserService {
     public void resetPasswordWithOtp(String email, String otp, String newPassword) {
         String storedOtp = redisService.getOtp(email);
         if (storedOtp == null || !storedOtp.equals(otp)) {
-            throw new RuntimeException("Mã OTP không hợp lệ hoặc đã hết hạn!");
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, "Mã OTP không hợp lệ hoặc đã hết hạn!", null);
         }
 
         User user = userRepository.findUserByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email không tồn tại!"));
+                .orElseThrow(() -> new CustomException(CodeConstants.CODE_NOT_FOUND, "Email không tồn tại!", null));
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -90,7 +93,7 @@ public class UserService {
     public void checkPhoneAndSendOtp(RegisterUserDTO registerUserDTO) {
         Optional<User> existingUser = userRepository.findUserByPhoneNumber(registerUserDTO.getPhoneNumber());
         if (existingUser.isPresent()) {
-            throw new RuntimeException("Số điện thoại đã được sử dụng!");
+            throw new CustomException(CodeConstants.CODE_BAD_REQUEST, "Số điện thoại đã được sử dụng!", null);
         }
 
         String otp = generateOtp();
@@ -106,7 +109,7 @@ public class UserService {
         // Lấy thông tin đăng ký từ bộ nhớ tạm
         RegisterUserDTO registerUserDTO = otpStorageService.getUserData(phoneNumber);
         if (registerUserDTO == null) {
-            throw new RuntimeException("Không tìm thấy dữ liệu đăng ký!");
+            throw new CustomException(CodeConstants.CODE_NOT_FOUND, "Không tìm thấy dữ liệu đăng ký!", null);
         }
 
         String hashedPassword = passwordEncoder.encode(registerUserDTO.getPassword());

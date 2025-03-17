@@ -94,7 +94,7 @@ public class UserSeeder implements CommandLineRunner {
                     .username("Nguyễn Quân")
                     .password(passwordEncoder.encode("1234567894"))
                     .displayName("Nguyễn Quân")
-                    .email("tranvy.art@gmail.com")
+                    .email("ntanhquan.sly@gmail.com")
                     .avatar("https://scontent.fsgn2-9.fna.fbcdn.net/v/t39.30808-6/470178018_963334848994533_4665347559148070661_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=1hiCy_RcNSMQ7kNvgHAmOea&_nc_oc=AdjQLZglSIpAL16ACR12a6IIkJWjI397-KNek1EBgbnFunSRbF-osXqrF8-rAl7Srq0TLhU_ZPhyczV6uKnJGUA-&_nc_zt=23&_nc_ht=scontent.fsgn2-9.fna&_nc_gid=4h8oWnhLK250iIa8HcdIiQ&oh=00_AYFT6eij1Eyg8MCK0nvohI29eTg42AuyYdQJG8m17qOfTg&oe=67DDD424")
                     .coverPhoto("https://scontent.fsgn2-6.fna.fbcdn.net/v/t1.6435-9/87390080_199672424599837_9146923517361520640_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=cc71e4&_nc_ohc=pa21MnfFt4cQ7kNvgGH1v_5&_nc_oc=Adg6HoQeiYnFrBSYeT3Y272DwRLkt99wR7eoGVIkTznLlgAYj41VQdz5u2Cs4VMgP6Y_DH1S4slB9Vn-YOMfofUF&_nc_zt=23&_nc_ht=scontent.fsgn2-6.fna&_nc_gid=Z4bA-ND_qM89vh9PlaAsNg&oh=00_AYFPsqkvaRtk6ZYzh4WURi57EK_z_6AlezfuQjPCLCEeMw&oe=67FF662D")
                     .bio("System administrator")

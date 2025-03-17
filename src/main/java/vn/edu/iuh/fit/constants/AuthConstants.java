@@ -12,7 +12,6 @@ public class AuthConstants {
     // Thông báo người dùng
     public static final String MESSAGE_USER_ID_NOT_FOUND = "Không tìm thấy người dùng với ID đã cung cấp";
     public static final String MESSAGE_INVALID_ACCESS_TOKEN = "Access Token không hợp lệ";
-    public static final String MESSAGE_TOKEN_HAS_BEEN_DISABLED = "Access Token đã bị vô hiệu hóa";
     public static final String MESSAGE_TOKEN_EXPIRED = "Access Token đã hết hạn!";
 
     // Thêm thông báo lỗi token

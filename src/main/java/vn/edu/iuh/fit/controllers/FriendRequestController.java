@@ -55,8 +55,8 @@ public class FriendRequestController {
 
     private ResponseEntity<ApiResponse<FriendRequestDTO>> handleFriendRequest(
             FriendRequestActionDTO request, BiFunction<User, User, FriendRequestDTO> action, String actionName) {
-        User sender = userService.getUserById(request.getSender());
-        User receiver = userService.getUserById(request.getReceiver());
+        User sender = userService.getUserById(request.getSender()).get();
+        User receiver = userService.getUserById(request.getReceiver()).get();
         return ResponseEntity.ok(new ApiResponse<>(200, actionName + " thành công", action.apply(sender, receiver)));
     }
 }
