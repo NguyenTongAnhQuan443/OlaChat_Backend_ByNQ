@@ -27,26 +27,26 @@ public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
 
-    @Operation(summary = "Gửi OTP xác thực số điện thoại")
-    @PostMapping("/send-otp")
-    public ResponseEntity<ApiResponse<Object>> sendOtp(@RequestParam String phoneNumber) {
-        userService.sendOtpToUser(phoneNumber);
-        return ResponseEntity.status(HttpStatus.CREATED).body(
+    @Operation(summary = "Gửi thông tin đăng ký và kiểm tra số điện thoại")
+    @PostMapping("/check-phone")
+    public ResponseEntity<ApiResponse<Object>> checkPhoneAndSendOtp(@Valid @RequestBody RegisterUserDTO registerUserDTO) {
+        userService.checkPhoneAndSendOtp(registerUserDTO);
+        return ResponseEntity.ok(
                 new ApiResponse<>(200, "Mã OTP đã được gửi đến số điện thoại của bạn.", null)
         );
     }
 
-    @Operation(summary = "Đăng ký tài khoản với OTP")
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserDTO>> register(
-            @Valid @RequestBody RegisterUserDTO registerUserDTO,
-            @RequestParam String otp) {
+    @Operation(summary = "Xác thực OTP và kích hoạt tài khoản")
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ApiResponse<UserDTO>> verifyOtp(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+        String otp = request.get("otp");
 
-        User newUser = userService.registerUserWithOtp(registerUserDTO, otp);
+        User newUser = userService.verifyOtpAndRegisterUser(phoneNumber, otp);
         UserDTO userDTO = userMapper.toUserDTO(newUser);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ApiResponse<>(201, "Đăng ký thành công!", userDTO)
+                new ApiResponse<>(201, "Xác thực OTP thành công, tài khoản đã được tạo!", userDTO)
         );
     }
 

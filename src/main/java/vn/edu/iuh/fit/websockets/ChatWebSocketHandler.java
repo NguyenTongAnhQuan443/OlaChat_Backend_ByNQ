@@ -38,6 +38,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (userId != null) {
             WebSocketSessionManager.addUserSession(userId, session);
             log.info("User Connected ID: " + userId);
+        }else {
+            log.info("User Disconnected ID: " + userId);
         }
     }
 
@@ -54,12 +56,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String textMessage = msgData.get(MESSAGE);
         chatService.saveMessage(senderId, receiverId, textMessage);
 
+
         WebSocketSession receiverSession = WebSocketSessionManager.getUserSession(receiverId);
-        if (receiverSession != null && receiverSession.isOpen()) {
-            receiverSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(msgData)));
-        } else {
-            log.warn("Receiver Is Not Online ID: ", receiverId);
-        }
+        receiverSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(msgData)));
+//        if (receiverSession != null && receiverSession.isOpen()) {
+//            receiverSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(msgData)));
+//        } else {
+//            log.warn("Receiver Is Not Online ID: ", receiverId);
+//        }
     }
 
     @Override

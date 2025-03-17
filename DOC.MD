@@ -15,3 +15,13 @@
 4. Người dùng nhập OTP và mật khẩu mới.	- Nếu OTP đúng, cho phép đặt lại mật khẩu.
 5. Xóa OTP khỏi Redis sau khi dùng.	- Đảm bảo OTP chỉ dùng 1 lần.
 6.  Giới hạn yêu cầu OTP trong Redis với thời gian hết hạn 1 giờ
+
+# Tạo tài khoản bằng số điện thoại
+1. Người dùng đăng ký tài khoản (chỉ lưu tạm thông tin mà chưa kích hoạt tài khoản).
+2. Hệ thống kiểm tra xem số điện thoại đã tồn tại hay chưa: 
+3. Nếu đã tồn tại → Báo lỗi.  Nếu chưa tồn tại → Gửi OTP để xác thực.
+4. Người dùng nhập OTP để xác thực số điện thoại.
+5. Nếu OTP hợp lệ: Tài khoản được kích hoạt.
+
+# Twailio
+olachatservice@gmail.com
