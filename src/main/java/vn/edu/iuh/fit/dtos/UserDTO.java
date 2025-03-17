@@ -26,4 +26,6 @@ public class UserDTO {
     private UserStatus status;
     private Role role;
     private LocalDateTime dob;
+    private boolean sex;
+
 }

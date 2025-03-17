@@ -10,6 +10,7 @@ import vn.edu.iuh.fit.enums.UserStatus;
 import vn.edu.iuh.fit.mappers.UserMapper;
 import vn.edu.iuh.fit.models.User;
 import vn.edu.iuh.fit.repositories.UserRepository;
+import vn.edu.iuh.fit.utils.FormatPhoneNumber;
 
 import java.security.SecureRandom;
 import java.util.Map;
@@ -28,7 +29,8 @@ public class UserService {
     private final EmailService emailService;
     private final RedisService redisService;
     private final SecureRandom secureRandom = new SecureRandom();
-    private final Map<String, RegisterUserDTO> tempUserStorage = new ConcurrentHashMap<>();
+    private final OtpStorageService otpStorageService;
+
 
     public User getUserById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User không tồn tại!"));
@@ -44,7 +46,7 @@ public class UserService {
                     .email(email)
                     .displayName(displayName)
                     .avatar(avatar)
-                    .authProvider(provider)
+                    .authProvider(AuthProvider.LOCAL)
                     .role(Role.USER)
                     .status(UserStatus.ACTIVE)
                     .build();
@@ -70,7 +72,6 @@ public class UserService {
         redisService.setResetAttemptLimit(email);
     }
 
-    // Xác thực OTP và đặt lại mật khẩu
     public void resetPasswordWithOtp(String email, String otp, String newPassword) {
         String storedOtp = redisService.getOtp(email);
         if (storedOtp == null || !storedOtp.equals(otp)) {
@@ -83,7 +84,6 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Xóa OTP sau khi sử dụng
         redisService.deleteOtp(email);
     }
 
@@ -93,32 +93,28 @@ public class UserService {
             throw new RuntimeException("Số điện thoại đã được sử dụng!");
         }
 
-        // Lưu thông tin user vào bộ nhớ tạm để sử dụng sau khi OTP hợp lệ
-        tempUserStorage.put(registerUserDTO.getPhoneNumber(), registerUserDTO);
-
-        // Gửi OTP
         String otp = generateOtp();
+        otpStorageService.saveOtp(registerUserDTO.getPhoneNumber(), otp, registerUserDTO); // Lưu cả thông tin user
         twilioService.sendOtp(registerUserDTO.getPhoneNumber(), otp);
     }
 
     public User verifyOtpAndRegisterUser(String phoneNumber, String otp) {
-        // Kiểm tra OTP
-        if (!twilioService.verifyOtp(phoneNumber, otp)) {
+        if (!otpStorageService.verifyOtp(phoneNumber, otp)) {
             throw new RuntimeException("Mã OTP không hợp lệ hoặc đã hết hạn!");
         }
 
-        // Lấy lại thông tin đăng ký cũ từ bộ nhớ tạm
-        RegisterUserDTO registerUserDTO = tempUserStorage.get(phoneNumber);
+        // Lấy thông tin đăng ký từ bộ nhớ tạm
+        RegisterUserDTO registerUserDTO = otpStorageService.getUserData(phoneNumber);
         if (registerUserDTO == null) {
             throw new RuntimeException("Không tìm thấy dữ liệu đăng ký!");
         }
 
-        // Hash mật khẩu trước khi lưu
         String hashedPassword = passwordEncoder.encode(registerUserDTO.getPassword());
+        String formattedPhoneNumber = FormatPhoneNumber.formatPhoneNumberTo0(registerUserDTO.getPhoneNumber());
 
-        // Tạo tài khoản mới
+        // Tạo user từ dữ liệu tạm
         User newUser = User.builder()
-                .phoneNumber(registerUserDTO.getPhoneNumber())
+                .phoneNumber(formattedPhoneNumber)
                 .displayName(registerUserDTO.getDisplayName())
                 .password(hashedPassword)
                 .email(registerUserDTO.getEmail())
@@ -126,18 +122,13 @@ public class UserService {
                 .authProvider(AuthProvider.LOCAL)
                 .build();
 
-        // Lưu vào database
         userRepository.save(newUser);
-
-        // Xóa dữ liệu tạm
-        tempUserStorage.remove(phoneNumber);
-        twilioService.removeOtp(phoneNumber);
+        otpStorageService.removeOtp(phoneNumber); // Xóa dữ liệu tạm
 
         return newUser;
     }
 
     private String generateOtp() {
-        int otp = 100000 + secureRandom.nextInt(900000);
-        return String.valueOf(otp);
+        return String.valueOf(100000 + secureRandom.nextInt(900000));
     }
 }

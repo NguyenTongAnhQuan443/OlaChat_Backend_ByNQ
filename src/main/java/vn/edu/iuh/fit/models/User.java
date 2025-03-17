@@ -27,8 +27,11 @@ public class User extends BaseEntity {
     @Column(columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String displayName;
     private String email;
+    @Column(length = 1000)
     private String avatar;
+    @Column(length = 1000)
     private String coverPhoto;
+    private boolean sex;
 
     private String phoneNumber;
 

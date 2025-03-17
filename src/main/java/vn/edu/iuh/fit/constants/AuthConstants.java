@@ -3,7 +3,6 @@ package vn.edu.iuh.fit.constants;
 public class AuthConstants {
 
     // Thông báo đăng nhập
-    public static final String MESSAGE_LOGIN_SUCCESS = "Đăng nhập thành công";
     public static final String MESSAGE_LOGIN_FAILED = "Số điện thoại hoặc mật khẩu không chính xác";
 
     // Thông báo đăng xuất
