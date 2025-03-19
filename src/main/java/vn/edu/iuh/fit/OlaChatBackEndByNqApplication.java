@@ -20,6 +20,9 @@ public class OlaChatBackEndByNqApplication {
         System.setProperty("TWILIO_PHONE_NUMBER", dotenv.get("TWILIO_PHONE_NUMBER"));
         System.setProperty("MAIL_USERNAME", dotenv.get("MAIL_USERNAME"));
         System.setProperty("MAIL_PASSWORD", dotenv.get("MAIL_PASSWORD"));
+        System.setProperty("CLOUD_NAME", dotenv.get("CLOUD_NAME"));
+        System.setProperty("API_KEY", dotenv.get("API_KEY"));
+        System.setProperty("API_SECRET", dotenv.get("API_SECRET"));
         SpringApplication.run(OlaChatBackEndByNqApplication.class, args);
     }
 

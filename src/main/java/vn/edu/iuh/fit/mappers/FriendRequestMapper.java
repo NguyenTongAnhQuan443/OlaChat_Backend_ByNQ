@@ -3,10 +3,12 @@ package vn.edu.iuh.fit.mappers;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
+import org.springframework.stereotype.Component;
 import vn.edu.iuh.fit.dtos.FriendRequestDTO;
 import vn.edu.iuh.fit.models.FriendRequest;
 
 @Mapper(componentModel = "spring", uses = UserMapper.class)
+@Component
 public interface FriendRequestMapper {
     FriendRequestMapper INSTANCE = Mappers.getMapper(FriendRequestMapper.class);
 
