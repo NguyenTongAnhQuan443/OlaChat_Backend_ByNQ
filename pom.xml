@@ -31,32 +31,32 @@
     </properties>
     <dependencies>
         <!-- ===================== SPRING BOOT CORE ===================== -->
-        <!-- Starter cho ứng dụng web (Spring MVC) -->
+        <!-- Xử lý web (REST API), hỗ trợ MVC -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- WebSocket support -->
+        <!-- WebSocket hỗ trợ realtime communication -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
-        <!-- Spring Data JPA (ORM) -->
+        <!-- Spring Data JPA: ORM kết nối database -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- Spring Validation -->
+        <!-- Validation cho dữ liệu đầu vào (annotation như @Valid, @NotNull) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
         <!-- ===================== DATABASE ===================== -->
-        <!-- MariaDB JDBC Driver -->
+        <!-- MariaDB JDBC Driver: Kết nối tới MariaDB -->
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
@@ -64,35 +64,35 @@
         </dependency>
 
         <!-- ===================== SECURITY ===================== -->
-        <!-- Spring Security Crypto -->
+        <!-- Mã hóa mật khẩu, mã hóa dữ liệu -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
             <version>6.4.3</version>
         </dependency>
 
-        <!-- Spring Security Core -->
+        <!-- Core security: quản lý chứng thực, phân quyền -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
             <version>6.4.3</version>
         </dependency>
 
-        <!-- Spring Security Web -->
+        <!-- Security web: bảo vệ các endpoint, xử lý session -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
             <version>6.4.3</version>
         </dependency>
 
-        <!-- Spring Security Config -->
+        <!-- Cấu hình Spring Security -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-config</artifactId>
             <version>6.4.3</version>
         </dependency>
 
-        <!-- Spring Security OAuth2 Client -->
+        <!-- OAuth2 Client: hỗ trợ đăng nhập bằng Google, Facebook... -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-client</artifactId>
@@ -100,6 +100,7 @@
         </dependency>
 
         <!-- ===================== JWT AUTHENTICATION ===================== -->
+        <!-- Xử lý JWT: tạo, parse, xác thực token -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -119,15 +120,20 @@
         </dependency>
 
         <!-- ===================== CACHING & REDIS ===================== -->
+        <!-- Redis: lưu cache, session... -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+
+        <!-- Spring Data Redis: thao tác dữ liệu trên Redis -->
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-redis</artifactId>
             <version>4.0.0-M1</version>
         </dependency>
+
+        <!-- Commons Pool2: quản lý kết nối pool cho Redis -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
@@ -135,7 +141,7 @@
         </dependency>
 
         <!-- ===================== DEVELOPMENT TOOLS ===================== -->
-        <!-- DevTools để hỗ trợ phát triển nhanh -->
+        <!-- DevTools: tự động reload khi code thay đổi -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -143,7 +149,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Lombok để giảm code boilerplate -->
+        <!-- Lombok: giảm code boilerplate (getter/setter...) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -151,7 +157,7 @@
         </dependency>
 
         <!-- ===================== TESTING ===================== -->
-        <!-- Spring Boot Starter Test -->
+        <!-- Testing cho Spring Boot: JUnit, Mockito... -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -159,7 +165,7 @@
         </dependency>
 
         <!-- ===================== API DOCUMENTATION ===================== -->
-        <!-- SpringDoc OpenAPI (Swagger UI) -->
+        <!-- Swagger UI để tự động tạo tài liệu API -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -167,7 +173,7 @@
         </dependency>
 
         <!-- ===================== UTILITIES ===================== -->
-        <!-- MapStruct để hỗ trợ mapping DTO -->
+        <!-- MapStruct: mapping DTO <-> Entity tự động -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
@@ -179,7 +185,7 @@
             <version>1.6.3</version>
         </dependency>
 
-        <!-- Dotenv hỗ trợ quản lý biến môi trường -->
+        <!-- dotenv-java: đọc biến môi trường từ file .env -->
         <dependency>
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
@@ -187,53 +193,48 @@
         </dependency>
 
         <!-- ===================== MESSAGING ===================== -->
-        <!-- Spring Messaging (cho WebSocket và RabbitMQ nếu cần) -->
+        <!-- Spring Messaging hỗ trợ giao tiếp realtime, RabbitMQ -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-messaging</artifactId>
             <version>7.0.0-M2</version>
         </dependency>
 
-        <!-- ===================== MAIL SERVICE ===================== -->
-        <!-- Spring Boot Starter Mail -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-
         <!-- ===================== GOOGLE SERVICES ===================== -->
-        <!-- Google API Client -->
+        <!-- Google API Client: tích hợp Google Services -->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
             <version>2.7.2</version>
         </dependency>
 
-
-        <!-- https://mvnrepository.com/artifact/com.google.api-client/google-api-client-jackson2 -->
+        <!-- Google API Client + Jackson2 -->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client-jackson2</artifactId>
             <version>2.7.2</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google.http-client/google-http-client-jackson2 -->
+
+        <!-- Google HTTP Client + Jackson2 -->
         <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client-jackson2</artifactId>
             <version>1.46.3</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.twilio.sdk/twilio -->
+
+        <!-- ===================== THIRD-PARTY SERVICES ===================== -->
+        <!-- Twilio: gửi SMS, gọi điện qua API -->
         <dependency>
             <groupId>com.twilio.sdk</groupId>
             <artifactId>twilio</artifactId>
             <version>10.7.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-mail -->
+
+        <!-- Gửi mail qua SMTP -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
-
     </dependencies>
 
     <build>
