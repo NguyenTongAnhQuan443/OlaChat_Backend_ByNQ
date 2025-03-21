@@ -12,6 +12,7 @@ import vn.edu.iuh.fit.dtos.LoginRequestDTO;
 import vn.edu.iuh.fit.dtos.LogoutRequestDTO;
 import vn.edu.iuh.fit.dtos.PhoneLoginRequestDTO;
 import vn.edu.iuh.fit.dtos.RefreshTokenRequestDTO;
+import vn.edu.iuh.fit.enums.AuthProvider;
 import vn.edu.iuh.fit.services.AuthenticationService;
 import vn.edu.iuh.fit.utils.ApiResponse;
 
@@ -36,19 +37,26 @@ public class AuthController {
     @PostMapping("/login-google")
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithGoogle(
             @Valid @RequestBody LoginRequestDTO request, HttpServletResponse response) {
-        return authService.loginWithOAuth("GOOGLE", request.getIdToken(), request.getDeviceId(), response);
+        return authService.loginWithOAuth(AuthProvider.GOOGLE.name(), request.getIdToken(), request.getDeviceId(), response);
     }
 
     @Operation(summary = "Làm mới Access Token", description = "Dùng refreshToken từ HTTP-only Cookie để lấy accessToken mới.")
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshAccessToken(
-            @Valid @RequestBody RefreshTokenRequestDTO request, HttpServletRequest httpRequest, HttpServletResponse response) {
+            HttpServletRequest httpRequest, HttpServletResponse response) {
         return authService.refreshAccessToken(httpRequest, response);
     }
 
     @Operation(summary = "Đăng xuất", description = "Dùng accessToken để đăng xuất")
+//    @DeleteMapping("/logout")
+//    public ResponseEntity<ApiResponse<String>> logout(@Valid @RequestBody LogoutRequestDTO request) {
+//        return authService.logout(request.getAccessToken(), request.getDeviceId());
+//    }
     @DeleteMapping("/logout")
-    public ResponseEntity<ApiResponse<String>> logout(@Valid @RequestBody LogoutRequestDTO request) {
-        return authService.logout(request.getAccessToken(), request.getDeviceId());
+    public ResponseEntity<ApiResponse<String>> logout(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestHeader("deviceId") String deviceId) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        return authService.logout(token, deviceId);
     }
 }
