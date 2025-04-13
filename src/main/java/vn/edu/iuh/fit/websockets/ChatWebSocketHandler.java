@@ -24,8 +24,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ChatService chatService;
 
     private UUID getUserIdFromSession(WebSocketSession session) {
-        // Lấy userId từ headers
-        String userIdStr = session.getHandshakeHeaders().getFirst(USER_ID);
+        String userIdStr = session.getHandshakeHeaders().getFirst(USER_ID); // USER_ID = "userId"
         return userIdStr != null ? UUID.fromString(userIdStr) : null;
     }
 
